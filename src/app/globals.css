@@ -1,9 +1,23 @@
 @import "tailwindcss";
 
+/*
+ * 明暗色由 class 驱动：.dark 挂在 <html> 上（layout.tsx 里的内联脚本在首绘前按
+ * localStorage / 系统偏好设置），这样菜单里的切换按钮才能覆盖系统偏好。
+ */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
+  color-scheme: light;
   --background: #fafafa; /* zinc-50，即页面内容原本的底色 */
   --foreground: #171717;
   --border: #e4e4e7;
+}
+
+.dark {
+  color-scheme: dark;
+  --background: #000000;
+  --foreground: #ededed;
+  --border: #27272a;
 }
 
 @theme inline {
@@ -12,14 +26,6 @@
   --color-border: var(--border);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #000000;
-    --foreground: #ededed;
-    --border: #27272a;
-  }
 }
 
 /*
@@ -57,6 +63,15 @@
 
 @utility glass-panel-subtitle {
   @apply text-[10px] sm:text-lg;
+}
+
+/*
+ * 毛玻璃条：导航栏胶囊与其折叠菜单共用（圆角、内边距、尺寸由各自元素设置）。
+ * 注意 backdrop-filter 会创建「backdrop root」：放在它内部的子元素再写 backdrop-blur 采不到页面内容，
+ * 看起来就像没模糊。所以折叠菜单必须与胶囊本体平级，不能嵌在胶囊内部。
+ */
+@utility glass-bar {
+  @apply border-2 bg-zinc-50/70 backdrop-blur-sm dark:bg-black/60;
 }
 
 /*
