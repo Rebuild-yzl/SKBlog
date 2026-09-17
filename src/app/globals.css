@@ -14,14 +14,25 @@
   --border: #e4e4e7;
 
   /*
-   * 采样描边（glass-edge）的可配置令牌 —— 环的四个参数都集中在这里，改这一处就全局生效。
-   * 个别位置要单独调，在元素上写任意属性覆盖即可，例如 [--glass-edge-inset:0px]。
+   * 采样描边（lightedge）的可配置令牌 —— 环的各项参数都集中在这里，改这一处就全局生效。
+   * 个别位置要单独调，在元素上写任意属性覆盖即可，例如 [--lightedge-inset:0px]。
    */
-  --glass-edge-filter: blur(8px) brightness(2) saturate(2);
-  --glass-edge-inset: -0.5px; /* 环相对边缘的位置：负值往外，越往外越只采样目标外面的内容 */
-  --glass-edge-width: 1px; /* 环宽 */
-  --glass-edge-tint: transparent; /* 环上盖的一层固定色，默认不加（= 只采样背景，见 glass-edge-solid） */
-  --glass-edge-line: var(--border); /* glass-edge-solid 用的描边色：亮色下就是 --border 本身 */
+  /*
+   * 采样滤镜链：拆成四个旋钮（模糊 / 提亮 / 饱和度 / 对比度），四项的默认值就等于原来写死的
+   * blur(8px) brightness(2) saturate(2)（contrast(100%) 是无作用的占位，方便单独调对比度）。
+   *
+   * 注意别在这里把链子拼好再放进 --lightedge-filter：自定义属性是在【声明它的那个元素】上解析的，
+   * 写在 :root 上就等于在根元素上把 8px / 200% 写死了，子元素再改单项旋钮也不会生效。
+   * 所以拼接放在 lightedge 的使用处，只在需要整体换链子时才设 --lightedge-filter。
+   */
+  --lightedge-blur: 8px;
+  --lightedge-brightness: 200%;
+  --lightedge-saturate: 200%;
+  --lightedge-contrast: 100%;
+  --lightedge-inset: -0.5px; /* 环相对边缘的位置：负值往外，越往外越只采样目标外面的内容 */
+  --lightedge-width: 1px; /* 环宽 */
+  --lightedge-tint: transparent; /* 环上盖的一层固定色，默认不加（= 只采样背景，见 lightedge-solid） */
+  --lightedge-line: var(--border); /* lightedge-solid 用的描边色：亮色下就是 --border 本身 */
 }
 
 .dark {
@@ -33,7 +44,7 @@
    * 暗色下把描边色往白里提一档：纯色背景上环本来就没东西可采样，
    * 直接拿 --border（#27272a）会显得很暗；想要更亮就把 20% 调大，想要回到原本的边框色就设成 0%。
    */
-  --glass-edge-line: color-mix(in oklab, var(--border), white 20%);
+  --lightedge-line: color-mix(in oklab, var(--border), white 20%);
 }
 
 @theme inline {
@@ -64,8 +75,8 @@
  *   glass-panel           面板本体：半透明深色底 + 背景模糊 + 圆角 + 内边距
  *                         = bg-black/30 + backdrop-blur-sm（blur(8px)）
  *                         + 圆角 11px + 左右内边距 8px（上下 0）
- *   glass-edge            采样描边（通用）：只管画环，参数全是令牌
- *   glass-edge-solid      纯色背景上用：把环的色调换成描边色（暗色下提亮一档）
+ *   lightedge             采样描边（通用）：只管画环，参数全是令牌
+ *   lightedge-solid       纯色背景上用：把环的色调换成描边色（暗色下提亮一档）
  *   glass-panel-title     标题字号：小屏 14px / 20px，≥ 640px 36px / 40px
  *   glass-panel-subtitle  副标题字号：小屏 10px / 15px，≥ 640px 18px / 28px
  */
@@ -81,26 +92,34 @@
 
 /*
  * 采样描边（通用）：给任何卡片/面板的一圈边缘做「采样背后的内容再提亮」的效果。
- * 只管画环，四个参数全部来自 :root 里的 --glass-edge-* 令牌，环自身不写死值 ——
+ * 只管画环，参数全部来自 :root 里的 --lightedge-* 令牌，环自身不写死值 ——
  * 所以同一个类既能直接用在卡片上，也能外套在自带 backdrop-filter 的面板上。
  *
  * 描边必须画在带 backdrop-filter 的元素【外面】：那个元素会创造一个 backdrop root，
  * 它内部的一切（包括 ::before / ::after）都只能采样到它内部那层已压暗、已模糊的合成结果，
  * 再怎么提高 brightness 也亮不起来（实测：写在面板内部的伪元素环，边缘亮度 126，比旁边的 140 还暗）。
  *
- * 注意：这个效果靠「采样背景」得来，背景本身就是纯色时提亮等于不变，详见 glass-edge-solid。
+ * 滤镜链在这里才拼起来（而不是在 :root）：自定义属性在【声明它的元素】上解析，
+ * 写进 :root 就等于把各项值钉死在根元素上，子元素改单项就失效了。
+ * 想整体换链子就设 --lightedge-filter，想改单项就用 lightedge-blur-<n> / -brightness-<n> / -saturate-<n> / -contrast-<n>。
+ *
+ * 注意：这个效果靠「采样背景」得来，背景本身就是纯色时提亮等于不变，详见 lightedge-solid。
  */
-@utility glass-edge {
+@utility lightedge {
   position: relative;
 
   &::after {
     content: "";
     position: absolute;
-    inset: var(--glass-edge-inset);
+    inset: var(--lightedge-inset);
     border-radius: inherit;
-    padding: var(--glass-edge-width);
-    background-color: var(--glass-edge-tint);
-    backdrop-filter: var(--glass-edge-filter);
+    padding: var(--lightedge-width);
+    background-color: var(--lightedge-tint);
+    backdrop-filter: var(
+      --lightedge-filter,
+      blur(var(--lightedge-blur)) brightness(var(--lightedge-brightness))
+        saturate(var(--lightedge-saturate)) contrast(var(--lightedge-contrast))
+    );
     mask:
       linear-gradient(#000 0 0) content-box,
       linear-gradient(#000 0 0);
@@ -110,41 +129,65 @@
 }
 
 /*
- * 纯色背景上的采样描边：只把「色调」令牌换成描边色 --glass-edge-line，不碰环的其它样式。
+ * 纯色背景上的采样描边：只把「色调」令牌换成描边色 --lightedge-line，不碰环的其它样式。
  *
  * 为什么需要它：环的颜色完全来自它背后被提亮的像素，在纯色背景上这一点提亮等于没有 ——
  * 暗色下纯黑提亮仍是黑，亮色下 #fafafa 提亮成白也看不出来，卡片自己没有背景图时就等于没边框。
  * 所以这类位置改成「拿边框色当底色」：
- *   亮色  --glass-edge-line = --border(#e4e4e7)，与原来的 1px 边框完全一致；
- *   暗色  --glass-edge-line = --border 往白里提 20%，黑底上才有「被照亮」的感觉。
+ *   亮色  --lightedge-line = --border(#e4e4e7)，与原来的 1px 边框完全一致；
+ *   暗色  --lightedge-line = --border 往白里提 20%，黑底上才有「被照亮」的感觉。
  *
  * 注意底层顺序：backdrop-filter 先提亮背后像素，环自己的背景色再压在上面，
  * 所以色调越不透明，背景的采样贡献就越小。完全不透明 = 一条纯色描边；
- * 只在背后真的是图片时才不需要它 —— 那种位置只用 glass-edge，让色调保持 transparent。
+ * 只在背后真的是图片时才不需要它 —— 那种位置只用 lightedge，让色调保持 transparent。
  */
-@utility glass-edge-solid {
-  --glass-edge-tint: var(--glass-edge-line);
+@utility lightedge-solid {
+  --lightedge-tint: var(--lightedge-line);
 }
 
 /*
- * 描边宽度：glass-edge-<数字>（像 border-2 那样按元素覆盖，不写就用 :root 的默认值）。
- * 例：glass-edge-2 = 2px、glass-edge-0.5 = 0.5px。它只改宽度，环的位置仍由 --glass-edge-inset 决定。
+ * 描边宽度：lightedge-<数字>（像 border-2 那样按元素覆盖，不写就用 :root 的默认值）。
+ * 例：lightedge-2 = 2px、lightedge-0.5 = 0.5px。它只改宽度，环的位置仍由 --lightedge-inset 决定。
  */
-@utility glass-edge-* {
-  --glass-edge-width: --value(number)px;
+@utility lightedge-* {
+  --lightedge-width: --value(number)px;
 }
 
 /*
- * 描边位置：glass-edge-inset-<数字> = 环相对边缘往里缩多少像素（0 就是正好压在边缘上），
- * 想往外伸用负号 -glass-edge-inset-<数字>（默认的骑边 -0.5px 就相当于外伸 0.5px）。
- * 它和宽度各管各的，可以自由组合，例如 glass-edge-3 glass-edge-inset-1。
+ * 描边位置：lightedge-inset-<数字> = 环相对边缘往里缩多少像素（0 就是正好压在边缘上），
+ * 想往外伸用负号 -lightedge-inset-<数字>（默认的骑边 -0.5px 就相当于外伸 0.5px）。
+ * 它和宽度各管各的，可以自由组合，例如 lightedge-3 lightedge-inset-1。
  */
-@utility glass-edge-inset-* {
-  --glass-edge-inset: --value(number)px;
+@utility lightedge-inset-* {
+  --lightedge-inset: --value(number)px;
 }
 
-@utility -glass-edge-inset-* {
-  --glass-edge-inset: calc(--value(number) * -1px);
+@utility -lightedge-inset-* {
+  --lightedge-inset: calc(--value(number) * -1px);
+}
+
+/*
+ * 采样滤镜链的单项旋钮（数值都按 Tailwind 的习惯取百分比，模糊取像素）：
+ *   lightedge-blur-4          → 模糊 4px
+ *   lightedge-brightness-150  → 提亮 150%
+ *   lightedge-saturate-300    → 饱和度 300%
+ *   lightedge-contrast-120    → 对比度 120%
+ * 不想逐项调时，直接覆盖 --lightedge-filter 整个链子。
+ */
+@utility lightedge-blur-* {
+  --lightedge-blur: --value(number)px;
+}
+
+@utility lightedge-brightness-* {
+  --lightedge-brightness: --value(number)%;
+}
+
+@utility lightedge-saturate-* {
+  --lightedge-saturate: --value(number)%;
+}
+
+@utility lightedge-contrast-* {
+  --lightedge-contrast: --value(number)%;
 }
 
 @utility glass-panel-title {
