@@ -30,7 +30,7 @@ export default function Profile({
           />
           <div
             aria-hidden
-            className="glass-edge pointer-events-none absolute inset-0 rounded-full [--glass-edge-inset:0px] [--glass-edge-tint:transparent]"
+            className="glass-edge glass-edge-3 -glass-edge-inset-5 pointer-events-none absolute inset-0 rounded-full [--glass-edge-tint:transparent]"
           />
         </div>
         <div className="flex flex-col gap-2">

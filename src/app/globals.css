@@ -126,6 +126,27 @@
   --glass-edge-tint: var(--glass-edge-line);
 }
 
+/*
+ * 描边宽度：glass-edge-<数字>（像 border-2 那样按元素覆盖，不写就用 :root 的默认值）。
+ * 例：glass-edge-2 = 2px、glass-edge-0.5 = 0.5px。它只改宽度，环的位置仍由 --glass-edge-inset 决定。
+ */
+@utility glass-edge-* {
+  --glass-edge-width: --value(number)px;
+}
+
+/*
+ * 描边位置：glass-edge-inset-<数字> = 环相对边缘往里缩多少像素（0 就是正好压在边缘上），
+ * 想往外伸用负号 -glass-edge-inset-<数字>（默认的骑边 -0.5px 就相当于外伸 0.5px）。
+ * 它和宽度各管各的，可以自由组合，例如 glass-edge-3 glass-edge-inset-1。
+ */
+@utility glass-edge-inset-* {
+  --glass-edge-inset: --value(number)px;
+}
+
+@utility -glass-edge-inset-* {
+  --glass-edge-inset: calc(--value(number) * -1px);
+}
+
 @utility glass-panel-title {
   @apply text-sm sm:text-4xl;
 }

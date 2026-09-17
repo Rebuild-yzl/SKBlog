@@ -95,6 +95,8 @@ src/
 | `glass-panel` | 面板外观 | `bg-black/30` + `backdrop-blur-sm`（`blur(8px)`）、圆角 `11px`、左右内边距 `8px`、上下 `0` | 同左（不随断点变化） |
 | `glass-edge` | 采样描边（通用）：只管 `::after` 画环，四个参数全走 `:root` 令牌 | `--glass-edge-inset: -0.5px`、`--glass-edge-width: 1px`、`--glass-edge-filter: blur(8px) brightness(2) saturate(2)`、`--glass-edge-tint: transparent`，加 mask 挖环、圆角 `inherit` | 同左 |
 | `glass-edge-solid` | 只把 `--glass-edge-tint` 换成 `--glass-edge-line`（描边色），环的其它样式一概不碰 | 与 `glass-edge` 同时使用 | 同左 |
+| `glass-edge-<数字>` | 按元素覆盖描边宽度（`glass-edge-2` = 2px，支持小数如 `glass-edge-0.5`）；不写就用 `:root` 的 `--glass-edge-width` | 同左 | 同左 |
+| `glass-edge-inset-<数字>` / `-glass-edge-inset-<数字>` | 按元素覆盖环的位置：正值往内缩（`0` = 压在边缘上），负值往外伸（默认骑边的 `-0.5px` 相当于 `-glass-edge-inset-0.5`） | 同左 | 同左 |
 | `glass-panel-title` | 标题字号 | `14px` / 行高 `20px` | `36px` / 行高 `40px` |
 | `glass-panel-subtitle` | 副标题字号 | `10px` / 行高 `15px` | `18px` / 行高 `28px` |
 
@@ -113,11 +115,11 @@ src/
 // 覆盖层排在图片之后 + inset 0 → 环整圈压在图片上，所以只用 glass-edge（纯采样）拿到高亮（头像就是这么做的）
 <div className="relative h-28 w-28">
   <Image … className="h-full w-full rounded-full object-cover" />
-  <div className="glass-edge pointer-events-none absolute inset-0 rounded-full [--glass-edge-inset:0px] [--glass-edge-tint:transparent]" />
+  <div className="glass-edge glass-edge-3 glass-edge-inset-0 pointer-events-none absolute inset-0 rounded-full [--glass-edge-tint:transparent]" />
 </div>
 
-// 纯色背景上的卡片/导航：加 glass-edge-solid 让环有一条稳定的描边
-<section className="glass-edge glass-edge-solid rounded-3xl bg-white …">
+// 纯色背景上的卡片/导航：加 glass-edge-solid 让环有一条稳定的描边；想改这一处的粗细就加 glass-edge-<数字>
+<section className="glass-edge glass-edge-2 glass-edge-solid rounded-3xl bg-white …">
 <div className="glass-bar glass-edge glass-edge-solid rounded-full p-4 …">
 ```
 
@@ -125,9 +127,8 @@ src/
 
 | 令牌 | 默认值 | 作用 |
 | --- | --- | --- |
-| `--glass-edge-inset` | `-0.5px` | 环相对边缘的位置：负值骑在边上、一半采样外部；设 `0px` 则完全坐落在目标内部 |
-| `--glass-edge-width` | `1px` | 环宽 |
-| `--glass-edge-filter` | `blur(8px) brightness(2) saturate(2)` | 环的滤镜链 |
+| `--glass-edge-inset` | `-0.5px` | 环相对边缘的位置：负值骑在边上、一半采样外部；设 `0px` 则完全坐落在目标内部（可用 `glass-edge-inset-<数字>` / `-glass-edge-inset-<数字>` 按元素覆盖） |
+| `--glass-edge-width` | `1px` | 环宽（可用 `glass-edge-<数字>` 按元素覆盖） || `--glass-edge-filter` | `blur(8px) brightness(2) saturate(2)` | 环的滤镜链 |
 | `--glass-edge-tint` | `transparent`（`glass-edge-solid` 设为 `--glass-edge-line`） | 环上盖的一层固定色；不透明时会把采样到的那层完全遮住 |
 | `--glass-edge-line` | 亮色 `var(--border)`、暗色 `color-mix(in oklab, var(--border), white 20%)` | `glass-edge-solid` 用的描边色，分模式定义 |
 
