@@ -53,7 +53,7 @@ src/
 │  ├─ projects/page.tsx      # 项目
 │  └─ works/page.tsx         # 作品
 └─ components/
-   ├─ navbar.tsx             # 顶部导航（sticky 胶囊样式，z-50）
+   ├─ navbar.tsx             # 顶部导航（sticky 胶囊，半透明 + backdrop-blur-sm，z-50）
    ├─ banner.tsx             # 横幅卡片：圆角边框，按 16:9 完整展示图片（不裁切），文字用 glass-panel 方块
    ├─ profile.tsx            # 个人名片（头像 + 名称 + 描述）
    └─ building.tsx           # 「This page is in development.」占位组件
@@ -102,6 +102,8 @@ src/
 ```
 
 说明：字号类之间是互斥的（标题用 `glass-panel-title`、副标题用 `glass-panel-subtitle`）；圆角在移动端视觉上接近胶囊形，因为 `11px` 会被浏览器按面板高度的一半裁切，这是有意保留的效果。
+
+导航栏**不使用** `glass-panel`：它只是同样的「半透明 + 背景模糊」思路，但底色、圆角、内边距和字号都归导航自己管，直接写在 `navbar.tsx` 里（`bg-zinc-50/70 dark:bg-black/60` + `backdrop-blur-sm`）。
 
 ## 部署
 
