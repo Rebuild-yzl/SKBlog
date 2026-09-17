@@ -59,9 +59,10 @@ src/
    ├─ navbar.tsx             # 顶部导航（客户端组件：sticky 胶囊 + 半透明模糊，<768px 折叠为汉堡菜单，z-50）
    ├─ theme-toggle.tsx       # 明暗切换按钮（切 <html> 的 .dark 类 + 写 localStorage；menu / icon 两种形态）
    ├─ notice-card.tsx        # 错误页/404 共用的提示卡片（附两个按钮样式常量）
+   ├─ nothing-here.tsx       # 空态占位（图标 + 两句文案，不套卡片）
    ├─ banner.tsx             # 横幅卡片：圆角边框，按 16:9 完整展示图片（不裁切），文字用 glass-panel 方块
    ├─ profile.tsx            # 个人名片（头像 + 名称 + 描述）
-   └─ building.tsx           # 「This page is in development.」占位组件
+   └─ building.tsx           # 旧的「This page is in development.」占位组件，目前已无页面引用
 ```
 
 ## 路由一览
@@ -69,17 +70,17 @@ src/
 - [x] `/` — Home：已有内容
 - [x] `/about` — About：横幅卡片 + 个人名片卡片
 - [ ] `/analytics` — Analytics：仅挂载 Vercel Analytics
-- [ ] `/blogs` — Blogs：占位
-- [ ] `/favorites` — Favorites：占位
-- [ ] `/participate` — Participate：占位
-- [ ] `/projects` — Projects：占位
-- [ ] `/works` — Works：占位
+- [ ] `/blogs` — Blogs：空态占位（`NothingHere`）
+- [ ] `/favorites` — Favorites：空态占位（`NothingHere`）
+- [ ] `/participate` — Participate：空态占位（`NothingHere`）
+- [ ] `/projects` — Projects：空态占位（`NothingHere`）
+- [ ] `/works` — Works：空态占位（`NothingHere`）
 - [x] 404 — 未匹配路由（`not-found.tsx`）
 - [x] 错误页 — 页面渲染出错（`error.tsx`）/ 根布局出错（`global-error.tsx`）
 
 ## 开发约定
 
-- **路径别名**：`@/*` 指向 `src/*`（见 `tsconfig.json`），例如 `import Building from "@/components/building"`。
+- **路径别名**：`@/*` 指向 `src/*`（见 `tsconfig.json`），例如 `import Profile from "@/components/profile"`。
 - **组件 props**：可配置的组件用带默认值的可选 props（参考 `profile.tsx`），页面里直接 `<Profile />` 即可使用。
 - **组件位置**：可复用组件放在 `src/components/`，页面级代码放在 `src/app/<route>/page.tsx`。
 - **样式**：Tailwind CSS 4 通过 `@import "tailwindcss"` 引入；自定义设计令牌写在 `globals.css` 的 `@theme inline` 中，不要使用 Tailwind 3 时代的 `tailwind.config.js` 写法。
