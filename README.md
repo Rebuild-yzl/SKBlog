@@ -32,7 +32,7 @@ npm run dev
 
 | 命令 | 说明 |
 | --- | --- |
-| `npm run dev` | 启动开发服务器（如需 Turbopack 可加 `--turbopack`） |
+| `npm run dev` | 启动开发服务器（默认使用 Turbopack，React Compiler 生效） |
 | `npm run build` | 生产环境构建 |
 | `npm start` | 运行生产构建产物 |
 | `npm run lint` | 运行 ESLint |
@@ -44,7 +44,7 @@ src/
 ├─ app/                      # App Router 路由
 │  ├─ layout.tsx             # 根布局：字体、metadata、导航栏
 │  ├─ page.tsx               # 首页 Home
-│  ├─ globals.css            # Tailwind 入口、主题变量、明暗色
+│  ├─ globals.css            # Tailwind 入口、主题令牌（背景/前景/边框）、明暗色
 │  ├─ about/page.tsx         # 关于
 │  ├─ analytics/page.tsx     # 访问统计（Vercel Analytics）
 │  ├─ blogs/page.tsx         # 博客
@@ -76,6 +76,7 @@ src/
 - **组件位置**：可复用组件放在 `src/components/`，页面级代码放在 `src/app/<route>/page.tsx`。
 - **样式**：Tailwind CSS 4 通过 `@import "tailwindcss"` 引入；自定义设计令牌写在 `globals.css` 的 `@theme inline` 中，不要使用 Tailwind 3 时代的 `tailwind.config.js` 写法。
 - **明暗色**：跟随系统 `prefers-color-scheme`，通过 `--background` / `--foreground` 变量切换。
+- **边框色**：全局默认边框色是 `globals.css` 的 `--border`（浅色 `#e4e4e7`，深色 `#27272a`）。Tailwind 4 的 preflight 不再设置默认 `border-color`（等价于 `currentColor`），所以项目在 `@layer base` 中补回了 `border-color: var(--border)` —— 写 `border` / `border-2` 就会自动用这个颜色，不要在每个组件里重复写死 `border-zinc-200 dark:border-zinc-800`。个别元素要改用别的颜色时，用 `border-<color>` 覆盖；描边（`ring-2`）可写 `ring-border` 保持同色。
 - **字体**：使用 `next/font/google` 加载 Geist 与 Geist Mono，以 CSS 变量 `--font-geist-sans` / `--font-geist-mono` 暴露。
 - **新增页面**：在 `src/app` 下建目录 + `page.tsx`，同时别忘了在 `src/components/navbar.tsx` 里补上导航链接。
 
