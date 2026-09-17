@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
+  --background: #fafafa; /* zinc-50，即页面内容原本的底色 */
   --foreground: #171717;
   --border: #e4e4e7;
 }
@@ -16,7 +16,7 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
+    --background: #000000;
     --foreground: #ededed;
     --border: #27272a;
   }
@@ -59,8 +59,16 @@
   @apply text-[10px] sm:text-lg;
 }
 
+/*
+ * 页面底色只由根元素负责：html 的背景会铺满整个画布（canvas），
+ * 包括横向溢出出来的区域，所以内容容器不要再自己写 bg-*，
+ * 否则一旦出现横向滚动，溢出区露出的是根背景，就会看到两套颜色的接缝。
+ */
+html {
+  background-color: var(--background);
+}
+
 body {
-  background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
