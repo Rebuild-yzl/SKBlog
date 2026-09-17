@@ -3,7 +3,10 @@ import Link from "next/link";
 export default function NavBar() {
   return (
     // <nav className="border-2 backdrop-blur-sm m-4 rounded-full inset-x-0 p-4 bg-zinc-50 dark:bg-black fixed top-0 items-center justify-center">
-    <nav className="border-2 backdrop-blur-sm m-4 rounded-full p-4 bg-zinc-50 dark:bg-black sticky top-0 items-center justify-center">
+    // 边框颜色不写死，统一由 globals.css 的 --border 提供
+    // z-50：页面里排在导航之后的定位元素会盖住吸顶导航，需要抬高导航层级
+    // 背景半透明 + backdrop-blur-sm，滚动时能看到内容从底下透过（不要套 glass-panel，圆角/内边距/字号都是导航自己的）
+    <nav className="border-2 backdrop-blur-sm m-4 rounded-full p-4 bg-zinc-50/70 dark:bg-black/60 sticky top-4 z-50 items-center justify-center">
       <div className="flex items-center justify-between gap-4">
         <p>NeuroSaiKou</p>
         <div className="flex gap-4">

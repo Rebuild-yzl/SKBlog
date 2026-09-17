@@ -1,36 +1,121 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# SKBlog
 
-## Getting Started
+NeuroSaiKou 的个人网站 —— 用来放博客、作品、项目与收藏的自我介绍型站点。
 
-First, run the development server:
+目前处于早期开发阶段：首页与 About 页有实际内容，其余页面均复用一个「建设中」占位组件。
+
+## 技术栈
+
+| 类别 | 选择 |
+| --- | --- |
+| 框架 | [Next.js](https://nextjs.org) 16.3.5（App Router） |
+| UI 库 | React 19.2.8 |
+| 语言 | TypeScript 5（`strict`） |
+| 样式 | Tailwind CSS 4 + PostCSS（`@tailwindcss/postcss`） |
+| 代码检查 | ESLint 9 + `eslint-config-next` |
+| 监控 | [@vercel/analytics](https://vercel.com/docs/analytics) |
+| 编译优化 | React Compiler（`next.config.ts` 中 `reactCompiler: true`） |
+
+> [!IMPORTANT]
+> 项目根目录的 `AGENTS.md`（由 `next dev` 自动写入）说明当前 Next.js 版本存在破坏性变更，要求改动代码前先阅读 `node_modules/next/dist/docs/` 下对应的指南，不要只依赖既有经验或旧文档。
+
+## 快速开始
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+打开 [http://localhost:3000](http://localhost:3000) 查看效果。编辑页面文件会自动热更新。
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 可用脚本
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| 命令 | 说明 |
+| --- | --- |
+| `npm run dev` | 启动开发服务器（默认使用 Turbopack，React Compiler 生效） |
+| `npm run build` | 生产环境构建 |
+| `npm start` | 运行生产构建产物 |
+| `npm run lint` | 运行 ESLint |
 
-## Learn More
+## 目录结构
 
-To learn more about Next.js, take a look at the following resources:
+```
+src/
+├─ app/                      # App Router 路由
+│  ├─ layout.tsx             # 根布局：字体、metadata、导航栏
+│  ├─ page.tsx               # 首页 Home
+│  ├─ globals.css            # Tailwind 入口、主题令牌（背景/前景/边框）、明暗色
+│  ├─ about/page.tsx         # 关于
+│  ├─ analytics/page.tsx     # 访问统计（Vercel Analytics）
+│  ├─ blogs/page.tsx         # 博客
+│  ├─ favorites/page.tsx     # 收藏
+│  ├─ participate/page.tsx   # 参与
+│  ├─ projects/page.tsx      # 项目
+│  └─ works/page.tsx         # 作品
+└─ components/
+   ├─ navbar.tsx             # 顶部导航（sticky 胶囊，半透明 + backdrop-blur-sm，z-50）
+   ├─ banner.tsx             # 横幅卡片：圆角边框，按 16:9 完整展示图片（不裁切），文字用 glass-panel 方块
+   ├─ profile.tsx            # 个人名片（头像 + 名称 + 描述）
+   └─ building.tsx           # 「This page is in development.」占位组件
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 路由一览
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- [x] `/` — Home：已有内容
+- [x] `/about` — About：横幅卡片 + 个人名片卡片
+- [ ] `/analytics` — Analytics：仅挂载 Vercel Analytics
+- [ ] `/blogs` — Blogs：占位
+- [ ] `/favorites` — Favorites：占位
+- [ ] `/participate` — Participate：占位
+- [ ] `/projects` — Projects：占位
+- [ ] `/works` — Works：占位
 
-## Deploy on Vercel
+## 开发约定
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- **路径别名**：`@/*` 指向 `src/*`（见 `tsconfig.json`），例如 `import Building from "@/components/building"`。
+- **组件 props**：可配置的组件用带默认值的可选 props（参考 `profile.tsx`），页面里直接 `<Profile />` 即可使用。
+- **组件位置**：可复用组件放在 `src/components/`，页面级代码放在 `src/app/<route>/page.tsx`。
+- **样式**：Tailwind CSS 4 通过 `@import "tailwindcss"` 引入；自定义设计令牌写在 `globals.css` 的 `@theme inline` 中，不要使用 Tailwind 3 时代的 `tailwind.config.js` 写法。
+- **明暗色**：跟随系统 `prefers-color-scheme`，通过 `--background` / `--foreground` 变量切换。
+- **边框色**：全局默认边框色是 `globals.css` 的 `--border`（浅色 `#e4e4e7`，深色 `#27272a`）。Tailwind 4 的 preflight 不再设置默认 `border-color`（等价于 `currentColor`），所以项目在 `@layer base` 中补回了 `border-color: var(--border)` —— 写 `border` / `border-2` 就会自动用这个颜色，不要在每个组件里重复写死 `border-zinc-200 dark:border-zinc-800`。个别元素要改用别的颜色时，用 `border-<color>` 覆盖；描边（`ring-2`）可写 `ring-border` 保持同色。
+- **毛玻璃小面板**：贴在图片/背景上的文字块统一用 `glass-panel` 系列工具类（定义在 `globals.css`），尺寸与字号见下方[毛玻璃小面板](#毛玻璃小面板glass-panel)一节，不要在组件里重复写这些值。
+- **字体**：使用 `next/font/google` 加载 Geist 与 Geist Mono，以 CSS 变量 `--font-geist-sans` / `--font-geist-mono` 暴露。
+- **层叠顺序**：导航栏是 `sticky top-4 z-50`；排在导航之后的定位元素（`relative` / `absolute`）默认会盖住导航，改动布局时要留意。
+- **图片**：`public/` 下的图片用 `<Image src="/banner.jpg" … />` 引用。Next 16 已弃用 `priority`，首屏图片改用 `loading="eager"`；不裁切地铺满容器宽度时用 `fill` + `sizes="100vw"` + 与图片同比例的外框（现有配图都是 16:9，用 `aspect-video`）。
+- **新增页面**：在 `src/app` 下建目录 + `page.tsx`，同时别忘了在 `src/components/navbar.tsx` 里补上导航链接。
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### 毛玻璃小面板（glass-panel）
+
+定义在 `src/app/globals.css`，用 Tailwind 4 的 `@utility` 注册，写在一起是为了以后只改一处就能全局生效。
+
+| 工具类 | 作用 | 小屏（< 640px） | ≥ 640px（`sm:`） |
+| --- | --- | --- | --- |
+| `glass-panel` | 面板外观 | `bg-black/30` + `backdrop-blur-sm`（`blur(8px)`）、圆角 `11px`、左右内边距 `8px`、上下 `0` | 同左（不随断点变化） |
+| `glass-panel-title` | 标题字号 | `14px` / 行高 `20px` | `36px` / 行高 `40px` |
+| `glass-panel-subtitle` | 副标题字号 | `10px` / 行高 `15px` | `18px` / 行高 `28px` |
+
+用法：面板本体用 `glass-panel`，文字再按层级叠加字号类，颜色与字重仍然由组件自己决定。
+
+```tsx
+<h1 className="glass-panel glass-panel-title font-semibold tracking-tight text-white">
+<p className="glass-panel glass-panel-subtitle text-white/80">
+```
+
+说明：字号类之间是互斥的（标题用 `glass-panel-title`、副标题用 `glass-panel-subtitle`）；圆角在移动端视觉上接近胶囊形，因为 `11px` 会被浏览器按面板高度的一半裁切，这是有意保留的效果。
+
+导航栏**不使用** `glass-panel`：它只是同样的「半透明 + 背景模糊」思路，但底色、圆角、内边距和字号都归导航自己管，直接写在 `navbar.tsx` 里（`bg-zinc-50/70 dark:bg-black/60` + `backdrop-blur-sm`）。
+
+## 部署
+
+推荐部署到 [Vercel](https://vercel.com/new)（Next.js 官方平台，零配置）。仓库远端为 `git@github.com:Rebuild-yzl/SKBlog.git`。
+
+部署前建议先执行 `npm run build` 和 `npm run lint` 确认无报错。
+
+## 待办
+
+- [ ] 用正式内容替换各页面的 `Building` 占位组件
+- [x] 更新 `src/app/layout.tsx` 中的 `metadata`（当前仍是 `Create Next App` / `Generated by create next app`）
+- [ ] 移动端适配：导航栏在小屏下未做折叠处理，8 个链接会横向溢出屏幕（实测窄屏下 `body` 宽度被撑到 690px）
+- [ ] 压缩 `public/banner.jpg`（10000×5625、约 15 MB）：源图过大会让图片优化首次生成很慢，建议缩到 2560px 宽以内
+- [ ] 将 `public/` 中的 create-next-app 默认 SVG 替换为站点自有资源（`avartor.jpg` 为头像）
+- [ ] 补充 LICENSE

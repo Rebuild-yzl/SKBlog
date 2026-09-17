@@ -3,11 +3,13 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --border: #e4e4e7;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-border: var(--border);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
@@ -16,7 +18,45 @@
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
+    --border: #27272a;
   }
+}
+
+/*
+ * 全局默认边框色：Tailwind 4 的 preflight 不再设置 border-color（默认是 currentColor），
+ * 这里补回来，让所有边框默认使用 --border，需要时用 border-<color> 覆盖。
+ */
+@layer base {
+  *,
+  ::before,
+  ::after,
+  ::backdrop {
+    border-color: var(--border);
+  }
+}
+
+/*
+ * 毛玻璃小面板（贴在图片/背景上的文字块）统一走这三个工具类，不要在组件里重复写这些值：
+ *
+ *   glass-panel           面板外观：半透明深色底 + 背景模糊 + 圆角 + 内边距
+ *                         = bg-black/30 + backdrop-blur-sm（blur(8px)）
+ *                         + 圆角 11px + 左右内边距 8px（上下 0）
+ *   glass-panel-title     标题字号：小屏 14px / 20px，≥ 640px 36px / 40px
+ *   glass-panel-subtitle  副标题字号：小屏 10px / 15px，≥ 640px 18px / 28px
+ */
+@utility glass-panel {
+  @apply bg-black/30 backdrop-blur-sm;
+  border-radius: 11px;
+  padding-inline: 0.5rem; /* px-2：左右各 8px */
+  padding-block: 0; /* 上下不留白 */
+}
+
+@utility glass-panel-title {
+  @apply text-sm sm:text-4xl;
+}
+
+@utility glass-panel-subtitle {
+  @apply text-[10px] sm:text-lg;
 }
 
 body {
