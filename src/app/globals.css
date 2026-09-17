@@ -20,7 +20,8 @@
   --glass-edge-filter: blur(8px) brightness(2) saturate(2);
   --glass-edge-inset: -0.5px; /* 环相对边缘的位置：负值往外，越往外越只采样目标外面的内容 */
   --glass-edge-width: 1px; /* 环宽 */
-  --glass-edge-tint: transparent; /* 纯色背景上的色调兜底，默认不加 */
+  --glass-edge-tint: transparent; /* 环上盖的一层固定色，默认不加（= 只采样背景，见 glass-edge-solid） */
+  --glass-edge-line: var(--border); /* glass-edge-solid 用的描边色：亮色下就是 --border 本身 */
 }
 
 .dark {
@@ -28,6 +29,11 @@
   --background: #000000;
   --foreground: #ededed;
   --border: #27272a;
+  /*
+   * 暗色下把描边色往白里提一档：纯色背景上环本来就没东西可采样，
+   * 直接拿 --border（#27272a）会显得很暗；想要更亮就把 20% 调大，想要回到原本的边框色就设成 0%。
+   */
+  --glass-edge-line: color-mix(in oklab, var(--border), white 20%);
 }
 
 @theme inline {
@@ -59,7 +65,7 @@
  *                         = bg-black/30 + backdrop-blur-sm（blur(8px)）
  *                         + 圆角 11px + 左右内边距 8px（上下 0）
  *   glass-edge            采样描边（通用）：只管画环，参数全是令牌
- *   glass-edge-solid      给采样描边叠一层 --border 色调兜底（纯色背景上用）
+ *   glass-edge-solid      纯色背景上用：把环的色调换成描边色（暗色下提亮一档）
  *   glass-panel-title     标题字号：小屏 14px / 20px，≥ 640px 36px / 40px
  *   glass-panel-subtitle  副标题字号：小屏 10px / 15px，≥ 640px 18px / 28px
  */
@@ -104,13 +110,20 @@
 }
 
 /*
- * 纯色背景上的采样描边：只把「色调」令牌换成 --border 的 55% 兜底，不碰环的其它样式。
- * 纯色背景没有东西可采样（深色模式下纯黑提亮仍是黑、浅色模式下 #fafafa 提亮成白也看不出来），
- * 不加这层的话边框会直接“消失”；加了之后压在图片上依然是提亮效果占主导，纯色背景上也有稳定的边。
- * 觉得浅色模式下比原来的 --border 淡，把 55% 调高到 70~80% 即可。
+ * 纯色背景上的采样描边：只把「色调」令牌换成描边色 --glass-edge-line，不碰环的其它样式。
+ *
+ * 为什么需要它：环的颜色完全来自它背后被提亮的像素，在纯色背景上这一点提亮等于没有 ——
+ * 暗色下纯黑提亮仍是黑，亮色下 #fafafa 提亮成白也看不出来，卡片自己没有背景图时就等于没边框。
+ * 所以这类位置改成「拿边框色当底色」：
+ *   亮色  --glass-edge-line = --border(#e4e4e7)，与原来的 1px 边框完全一致；
+ *   暗色  --glass-edge-line = --border 往白里提 20%，黑底上才有「被照亮」的感觉。
+ *
+ * 注意底层顺序：backdrop-filter 先提亮背后像素，环自己的背景色再压在上面，
+ * 所以色调越不透明，背景的采样贡献就越小。完全不透明 = 一条纯色描边；
+ * 只在背后真的是图片时才不需要它 —— 那种位置只用 glass-edge，让色调保持 transparent。
  */
 @utility glass-edge-solid {
-  --glass-edge-tint: color-mix(in oklab, var(--border) 55%, transparent);
+  --glass-edge-tint: var(--glass-edge-line);
 }
 
 @utility glass-panel-title {

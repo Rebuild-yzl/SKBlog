@@ -94,7 +94,7 @@ src/
 | --- | --- | --- | --- |
 | `glass-panel` | 面板外观 | `bg-black/30` + `backdrop-blur-sm`（`blur(8px)`）、圆角 `11px`、左右内边距 `8px`、上下 `0` | 同左（不随断点变化） |
 | `glass-edge` | 采样描边（通用）：只管 `::after` 画环，四个参数全走 `:root` 令牌 | `--glass-edge-inset: -0.5px`、`--glass-edge-width: 1px`、`--glass-edge-filter: blur(8px) brightness(2) saturate(2)`、`--glass-edge-tint: transparent`，加 mask 挖环、圆角 `inherit` | 同左 |
-| `glass-edge-solid` | 只把 `--glass-edge-tint` 换成 `--border` 55% 兜底，环的其它样式一概不碰 | 与 `glass-edge` 同时使用 | 同左 |
+| `glass-edge-solid` | 只把 `--glass-edge-tint` 换成 `--glass-edge-line`（描边色），环的其它样式一概不碰 | 与 `glass-edge` 同时使用 | 同左 |
 | `glass-panel-title` | 标题字号 | `14px` / 行高 `20px` | `36px` / 行高 `40px` |
 | `glass-panel-subtitle` | 副标题字号 | `10px` / 行高 `15px` | `18px` / 行高 `28px` |
 
@@ -109,19 +109,27 @@ src/
 // 卡片：内部就是图片，inset 设 0 让环压在图上；此时不要再用 border-2，否则会变成双层边
 <section className="glass-edge overflow-hidden rounded-3xl [--glass-edge-inset:0px] …">
 
-// 纯色背景上的卡片/导航：加 glass-edge-solid 兜底，边框才不会因为「提亮纯色」而消失
+// 图片这类替换元素（img / video）挂不了伪元素：外套一层管定位，再单起一层覆盖层管描边。
+// 覆盖层排在图片之后 + inset 0 → 环整圈压在图片上，所以只用 glass-edge（纯采样）拿到高亮（头像就是这么做的）
+<div className="relative h-28 w-28">
+  <Image … className="h-full w-full rounded-full object-cover" />
+  <div className="glass-edge pointer-events-none absolute inset-0 rounded-full [--glass-edge-inset:0px] [--glass-edge-tint:transparent]" />
+</div>
+
+// 纯色背景上的卡片/导航：加 glass-edge-solid 让环有一条稳定的描边
 <section className="glass-edge glass-edge-solid rounded-3xl bg-white …">
 <div className="glass-bar glass-edge glass-edge-solid rounded-full p-4 …">
 ```
 
-**想调环的样子，只改 `:root` 里的四个令牌**（环本身不写死值）：
+**想调环的样子，只改令牌**（环本身不写死值）：
 
 | 令牌 | 默认值 | 作用 |
 | --- | --- | --- |
 | `--glass-edge-inset` | `-0.5px` | 环相对边缘的位置：负值骑在边上、一半采样外部；设 `0px` 则完全坐落在目标内部 |
 | `--glass-edge-width` | `1px` | 环宽 |
 | `--glass-edge-filter` | `blur(8px) brightness(2) saturate(2)` | 环的滤镜链 |
-| `--glass-edge-tint` | `transparent` | 固定在环上的一层色调，不采样背景（`glass-edge-solid` 就是把它换成 `--border` 55%） |
+| `--glass-edge-tint` | `transparent`（`glass-edge-solid` 设为 `--glass-edge-line`） | 环上盖的一层固定色；不透明时会把采样到的那层完全遮住 |
+| `--glass-edge-line` | 亮色 `var(--border)`、暗色 `color-mix(in oklab, var(--border), white 20%)` | `glass-edge-solid` 用的描边色，分模式定义 |
 
 单个位置要单独调，在元素上写任意属性覆盖即可（如 `[--glass-edge-inset:0px]`）—— 令牌默认值写在 `:root`，任意属性的优先级始终更高。新位置也只需要 `glass-edge` + 需要时加 `glass-edge-solid`。
 
@@ -131,7 +139,11 @@ src/
 
 滤镜链按顺序作用，三个参数各司其职：`blur` 与目标保持一致（两边才是同一层玻璃的观感）；`brightness` 控制亮边强度；`saturate` 补回被提亮冲淡的颜色 —— 提亮会把亮部推向白色、压缩色差，不加饱和度这条边会显得发灰发白，而不是「被照亮」。背景亮则边亮、背景暗则边暗。
 
-> **纯色背景上要加 `glass-edge-solid`**：效果靠采样得来，背景是纯色时提亮等于不变 —— 深色模式下纯黑提亮仍是黑，浅色模式下 `#fafafa` 提亮成白也看不出来。所以横幅卡片、图片上的文字面板直接用 `glass-edge`；个人名片卡片、导航胶囊这类背景是纯色的位置要叠 `glass-edge-solid`（它只把 `--glass-edge-tint` 换成 `color-mix(in oklab, var(--border) 55%, transparent)` 这层兜底色），否则浅色模式下边框会直接消失。觉得浅色模式下这条边比原来的 `--border` 淡，把 55% 调高到 70~80% 即可。
+> **纯色背景上要加 `glass-edge-solid`**：效果靠采样得来，背景是纯色时提亮等于不变 —— 深色模式下纯黑提亮仍是黑，浅色模式下 `#fafafa` 提亮成白也看不出来。所以横幅卡片、图片上的文字面板、头像直接用 `glass-edge`（环都压在图片上）；个人名片卡片、导航胶囊这类背景是纯色的位置要叠 `glass-edge-solid`，让环改用 `--glass-edge-line` 这个固定描边色：亮色下它就是 `--border`（与原来的 1px 边框完全一致），暗色下把 `--border` 往白里提了 20%（`#27272a` → oklab L 0.27→0.42），否则黑底上会显得很暗。想要更亮就把 20% 调大，想回到原本的边框色就设成 0%。
+
+> **`--glass-edge-tint` 会被继承，嵌套的环要显式重置**：`glass-edge-solid` 就是靠设置这个自定义属性起作用的，而自定义属性会向下继承 —— 嵌在 `-solid` 元素里的另一个环（比如名片卡片里的头像）会连带拿到那条不透明描边色，采样的高亮就没了。要在里面用纯采样的环，必须写 `[--glass-edge-tint:transparent]` 把它重置掉。
+
+> **底层顺序：`backdrop-filter` 提亮的是环「背后」的像素，环自己的背景色是压在这层之上的**，所以色调越不透明、采样的贡献越小。完全不透明就等于一条纯色描边 —— 纯色背景上本来就没什么可采样，这正是 `glass-edge-solid` 的取舍；背后真的是图片的位置就只用 `glass-edge`，让色调保持 `transparent`。
 
 > **描边要画在面板外面（那层薄外壳上），不能写成面板自己的 `::before` / `::after`**：`glass-panel` 的 `backdrop-filter` 会创造一个「backdrop root」，它内部的一切（包括伪元素）只能采样到面板内部那层已压暗、已模糊的合成结果，所以再怎么提高 `brightness()` 也亮不起来。实测：写成面板内部伪元素时，边缘亮度只有 **126**，比旁边的 **140** 还暗；移到外壳上之后，边缘明显亮于面板内部。
 
@@ -141,7 +153,7 @@ src/
 
 #### `glass-bar`（导航栏与折叠菜单）
 
-导航栏胶囊和它的折叠菜单共用同一个工具类 `glass-bar`：`border-2` + `bg-zinc-50/70 dark:bg-black/60` + `backdrop-blur-sm` + `overflow: clip`。圆角与内边距不抽离，由各自元素设置 —— 胶囊是 `rounded-full p-4`，菜单是 `rounded-3xl p-2`。
+导航栏胶囊和它的折叠菜单共用同一个工具类 `glass-bar`：`bg-zinc-50/70 dark:bg-black/60` + `backdrop-blur-sm` + `overflow: clip`（描边由 `glass-edge glass-edge-solid` 提供，就写在同一元素上）。圆角与内边距不抽离，由各自元素设置 —— 胶囊是 `rounded-full p-4`，菜单是 `rounded-3xl p-2`。
 
 `overflow: clip` 是防溢出的保险：万一里层内容有几像素溢出（文案变长、断点临界值等），就地裁掉，而不是漏到外面把整页撑出横向滚动条（实测往胶囊里塞 2000px 宽的元素，页面 `scrollWidth` 仍等于视口宽）。用 `clip` 而不是 `hidden`，是为了不把胶囊变成可滚动容器；另外**不要**把它加到外层那个只负责 `sticky` 的容器上，否则绝对定位的折叠菜单会被一起裁掉。
 

@@ -16,14 +16,23 @@ export default function Profile({
   return (
     <section className="glass-edge glass-edge-solid w-full rounded-3xl bg-white p-6 shadow-sm sm:p-8 lg:p-10 dark:bg-zinc-950">
       <div className="flex flex-col items-center gap-6 text-center sm:flex-row sm:text-left">
-        <Image
-          src={avatarSrc}
-          alt={avatarAlt}
-          width={280}
-          height={280}
-          loading="eager"
-          className="h-28 w-28 shrink-0 rounded-full object-cover ring-2 ring-border"
-        />
+        {/* 头像描边：img 是替换元素，挂不了伪元素，所以外套一层管定位、再单起一层覆盖层管描边；
+            覆盖层排在图片之后，环（inset 0）就整圈压在照片上，采样到的是照片自己的边缘像素，
+            所以这里只用 glass-edge（不带 -solid）—— 和横幅卡片同理，背后是图片就不需要固定描边色 */}
+        <div className="relative h-28 w-28 shrink-0">
+          <Image
+            src={avatarSrc}
+            alt={avatarAlt}
+            width={280}
+            height={280}
+            loading="eager"
+            className="h-full w-full rounded-full object-cover"
+          />
+          <div
+            aria-hidden
+            className="glass-edge pointer-events-none absolute inset-0 rounded-full [--glass-edge-inset:0px] [--glass-edge-tint:transparent]"
+          />
+        </div>
         <div className="flex flex-col gap-2">
           <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">
             {name}
