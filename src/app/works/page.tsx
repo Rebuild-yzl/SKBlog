@@ -1,7 +1,5 @@
-import Building from "@/components/building";
+import NothingHere from "@/components/nothing-here";
 
 export default function Works() {
-    return (
-        <Building />
-    )
+  return <NothingHere />;
 }
