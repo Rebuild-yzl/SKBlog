@@ -45,6 +45,9 @@ src/
 │  ├─ layout.tsx             # 根布局：字体、metadata、导航栏、明暗初始化脚本
 │  ├─ page.tsx               # 首页 Home
 │  ├─ globals.css            # Tailwind 入口、主题令牌、根背景、glass-panel 工具类、明暗色
+│  ├─ not-found.tsx          # 404（替代 Next 自带页；在根布局内渲染，带导航栏与主题）
+│  ├─ error.tsx              # 路由段错误边界（替代自带报错页，提供 Try again）
+│  ├─ global-error.tsx       # 最外层错误边界：替换根布局，自带 <html>/<body>/全局样式/主题
 │  ├─ about/page.tsx         # 关于
 │  ├─ analytics/page.tsx     # 访问统计（Vercel Analytics）
 │  ├─ blogs/page.tsx         # 博客
@@ -55,6 +58,7 @@ src/
 └─ components/
    ├─ navbar.tsx             # 顶部导航（客户端组件：sticky 胶囊 + 半透明模糊，<768px 折叠为汉堡菜单，z-50）
    ├─ theme-toggle.tsx       # 明暗切换按钮（切 <html> 的 .dark 类 + 写 localStorage；menu / icon 两种形态）
+   ├─ notice-card.tsx        # 错误页/404 共用的提示卡片（附两个按钮样式常量）
    ├─ banner.tsx             # 横幅卡片：圆角边框，按 16:9 完整展示图片（不裁切），文字用 glass-panel 方块
    ├─ profile.tsx            # 个人名片（头像 + 名称 + 描述）
    └─ building.tsx           # 「This page is in development.」占位组件
@@ -70,6 +74,8 @@ src/
 - [ ] `/participate` — Participate：占位
 - [ ] `/projects` — Projects：占位
 - [ ] `/works` — Works：占位
+- [x] 404 — 未匹配路由（`not-found.tsx`）
+- [x] 错误页 — 页面渲染出错（`error.tsx`）/ 根布局出错（`global-error.tsx`）
 
 ## 开发约定
 
