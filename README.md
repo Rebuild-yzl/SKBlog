@@ -2,7 +2,7 @@
 
 NeuroSaiKou 的个人网站 —— 用来放博客、作品、项目与收藏的自我介绍型站点。
 
-目前处于早期开发阶段：只有首页内容完成，其余页面均复用一个「建设中」占位组件。
+目前处于早期开发阶段：首页与 About 页有实际内容，其余页面均复用一个「建设中」占位组件。
 
 ## 技术栈
 
@@ -54,13 +54,14 @@ src/
 │  └─ works/page.tsx         # 作品
 └─ components/
    ├─ navbar.tsx             # 顶部导航（sticky 胶囊样式）
+   ├─ profile.tsx            # 个人名片（头像 + 名称 + 描述）
    └─ building.tsx           # 「This page is in development.」占位组件
 ```
 
 ## 路由一览
 
 - [x] `/` — Home：已有内容
-- [ ] `/about` — About：占位
+- [x] `/about` — About：个人名片卡片
 - [ ] `/analytics` — Analytics：仅挂载 Vercel Analytics
 - [ ] `/blogs` — Blogs：占位
 - [ ] `/favorites` — Favorites：占位
@@ -71,6 +72,7 @@ src/
 ## 开发约定
 
 - **路径别名**：`@/*` 指向 `src/*`（见 `tsconfig.json`），例如 `import Building from "@/components/building"`。
+- **组件 props**：可配置的组件用带默认值的可选 props（参考 `profile.tsx`），页面里直接 `<Profile />` 即可使用。
 - **组件位置**：可复用组件放在 `src/components/`，页面级代码放在 `src/app/<route>/page.tsx`。
 - **样式**：Tailwind CSS 4 通过 `@import "tailwindcss"` 引入；自定义设计令牌写在 `globals.css` 的 `@theme inline` 中，不要使用 Tailwind 3 时代的 `tailwind.config.js` 写法。
 - **明暗色**：跟随系统 `prefers-color-scheme`，通过 `--background` / `--foreground` 变量切换。
