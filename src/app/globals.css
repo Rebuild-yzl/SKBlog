@@ -69,9 +69,14 @@
  * 毛玻璃条：导航栏胶囊与其折叠菜单共用（圆角、内边距、尺寸由各自元素设置）。
  * 注意 backdrop-filter 会创建「backdrop root」：放在它内部的子元素再写 backdrop-blur 采不到页面内容，
  * 看起来就像没模糊。所以折叠菜单必须与胶囊本体平级，不能嵌在胶囊内部。
+ *
+ * overflow: clip 是保险：万一里层内容有几像素溢出（多语言文案变长、断点临界值等），
+ * 就地裁掉而不是漏到外面把整页撑出横向滚动条。用 clip 而不是 hidden，是不想让它变成一个可滚动的容器。
+ * 注意别把它加到外层的 sticky 容器上 —— 那样绝对定位的折叠菜单会被一起裁掉。
  */
 @utility glass-bar {
   @apply border-2 bg-zinc-50/70 backdrop-blur-sm dark:bg-black/60;
+  overflow: clip;
 }
 
 /*

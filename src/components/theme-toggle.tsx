@@ -9,8 +9,15 @@ const STORAGE_KEY = "theme";
  * localStorage / 系统偏好设好，这里只负责切换并记住用户的选择。
  * 按钮自身的图标与文案完全交给 CSS 的 dark: 变体，所以组件不需要任何 state，
  * 也就不存在服务端渲染与客户端不一致的问题。
+ *
+ * variant="menu"（默认）是折叠菜单里的一整行（图标 + 文案）；
+ * variant="icon" 是桌面导航栏里的紧凑图标按钮，文案改用 sr-only 提供无障碍名称。
  */
-export default function ThemeToggle() {
+export default function ThemeToggle({
+  variant = "menu",
+}: {
+  variant?: "menu" | "icon";
+}) {
   function toggle() {
     const isDark = !document.documentElement.classList.contains("dark");
     document.documentElement.classList.toggle("dark", isDark);
@@ -21,10 +28,16 @@ export default function ThemeToggle() {
     }
   }
 
+  const isIcon = variant === "icon";
+
   return (
     <button
       type="button"
-      className="flex items-center gap-3 rounded-full px-3 py-2 hover:bg-black/5 dark:hover:bg-white/10"
+      className={
+        isIcon
+          ? "inline-flex items-center justify-center rounded-full p-1 hover:bg-black/5 dark:hover:bg-white/10"
+          : "flex items-center gap-3 rounded-full px-3 py-2 hover:bg-black/5 dark:hover:bg-white/10"
+      }
       onClick={toggle}
     >
       <svg
@@ -47,8 +60,14 @@ export default function ThemeToggle() {
           <path d="M10 2.5v2M10 15.5v2M2.5 10h2M15.5 10h2M4.7 4.7l1.4 1.4M13.9 13.9l1.4 1.4M15.3 4.7l-1.4 1.4M6.1 13.9l-1.4 1.4" />
         </g>
       </svg>
-      <span className="dark:hidden">Dark mode</span>
-      <span className="hidden dark:block">Light mode</span>
+      {isIcon ? (
+        <span className="sr-only">Toggle theme</span>
+      ) : (
+        <>
+          <span className="dark:hidden">Dark mode</span>
+          <span className="hidden dark:block">Light mode</span>
+        </>
+      )}
     </button>
   );
 }

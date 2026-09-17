@@ -54,7 +54,7 @@ src/
 │  └─ works/page.tsx         # 作品
 └─ components/
    ├─ navbar.tsx             # 顶部导航（客户端组件：sticky 胶囊 + 半透明模糊，<768px 折叠为汉堡菜单，z-50）
-   ├─ theme-toggle.tsx       # 明暗切换按钮（切 <html> 的 .dark 类 + 写 localStorage）
+   ├─ theme-toggle.tsx       # 明暗切换按钮（切 <html> 的 .dark 类 + 写 localStorage；menu / icon 两种形态）
    ├─ banner.tsx             # 横幅卡片：圆角边框，按 16:9 完整展示图片（不裁切），文字用 glass-panel 方块
    ├─ profile.tsx            # 个人名片（头像 + 名称 + 描述）
    └─ building.tsx           # 「This page is in development.」占位组件
@@ -107,7 +107,9 @@ src/
 
 #### `glass-bar`（导航栏与折叠菜单）
 
-导航栏胶囊和它的折叠菜单共用同一个工具类 `glass-bar`：`border-2` + `bg-zinc-50/70 dark:bg-black/60` + `backdrop-blur-sm`。圆角与内边距不抽离，由各自元素设置 —— 胶囊是 `rounded-full p-4`，菜单是 `rounded-3xl p-2`。
+导航栏胶囊和它的折叠菜单共用同一个工具类 `glass-bar`：`border-2` + `bg-zinc-50/70 dark:bg-black/60` + `backdrop-blur-sm` + `overflow: clip`。圆角与内边距不抽离，由各自元素设置 —— 胶囊是 `rounded-full p-4`，菜单是 `rounded-3xl p-2`。
+
+`overflow: clip` 是防溢出的保险：万一里层内容有几像素溢出（文案变长、断点临界值等），就地裁掉，而不是漏到外面把整页撑出横向滚动条（实测往胶囊里塞 2000px 宽的元素，页面 `scrollWidth` 仍等于视口宽）。用 `clip` 而不是 `hidden`，是为了不把胶囊变成可滚动容器；另外**不要**把它加到外层那个只负责 `sticky` 的容器上，否则绝对定位的折叠菜单会被一起裁掉。
 
 > **注意 `backdrop-filter` 的 backdrop root 行为**：带 `backdrop-filter` 的元素会成为其子元素的「backdrop root」，导致子元素上的 `backdrop-blur` 只能采到该元素自身的内容，看起来就像模糊没生效。所以折叠菜单必须与胶囊本体**平级**（都放在那个只负责 `sticky` + `m-4` 的 `<nav>` 里），不能嵌在带模糊的胶囊内部。
 
@@ -124,5 +126,5 @@ src/
 - [x] 移动端适配：导航栏在 < 768px（`md` 断点）折叠为汉堡菜单，原来 8 个链接撑出 690px 横向溢出的问题已解决（420~1280px 实测溢出均为 0）
 - [ ] 压缩 `public/banner.jpg`（10000×5625、约 15 MB）：源图过大会让图片优化首次生成很慢，建议缩到 2560px 宽以内
 - [ ] 将 `public/` 中的 create-next-app 默认 SVG 替换为站点自有资源（`avartor.jpg` 为头像）
-- [ ] 明暗切换按钮目前只放在移动端折叠菜单里（该菜单是 `md:hidden`），≥ 768px 时没有入口，后续需要在桌面导航栏上补一个
+- [x] 桌面端明暗切换入口：导航栏右侧放了 `ThemeToggle variant="icon"`（图标形态，`sr-only` 文案做无障碍名称），小屏仍用折叠菜单底部的整行按钮
 - [ ] 补充 LICENSE

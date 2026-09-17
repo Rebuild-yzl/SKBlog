@@ -29,13 +29,19 @@ export default function NavBar() {
         <div className="flex items-center justify-between gap-4">
           <p>NeuroSaiKou</p>
 
-          {/* 宽度够时平铺全部链接：8 个链接加品牌名约需 720px，所以断点取 md(768px) */}
-          <div className="hidden gap-4 md:flex">
+          {/* 宽度够时平铺全部链接：8 个链接 + 品牌名 + 切换按钮约需 700px，
+              所以断点取 md(768px)，并在 md 档把间距收窄到 gap-2 留出余量 */}
+          <div className="hidden gap-2 md:flex lg:gap-4">
             {links.map((link) => (
               <Link key={link.href} href={link.href}>
                 {link.label}
               </Link>
             ))}
+          </div>
+
+          {/* 大屏：图标形态的明暗切换（小屏收在折叠菜单底部） */}
+          <div className="hidden md:flex">
+            <ThemeToggle variant="icon" />
           </div>
 
           {/* 宽度不够时折叠成汉堡按钮 */}
