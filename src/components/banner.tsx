@@ -33,15 +33,20 @@ export default function Banner({
         <div className="absolute inset-0 bg-linear-to-br from-zinc-900 via-zinc-700 to-zinc-500 dark:from-zinc-900 dark:via-zinc-800 dark:to-zinc-700" />
       )}
 
-      {/* 文字各自装在半透明毛玻璃方块里，样式统一走 globals.css 的 glass-panel */}
+      {/* 文字各自装在半透明毛玻璃方块里，样式统一走 globals.css 的 glass-panel；
+          外层 glass-panel-wrap 提供定位，它的 ::after 就是那条采样背景的描边 */}
       <div className="relative flex flex-col items-start gap-1 px-3 pb-3 sm:gap-2 sm:px-6 sm:pb-8 lg:px-8 lg:pb-10">
-        <h1 className="glass-panel glass-panel-title font-semibold tracking-tight text-white">
-          {title}
-        </h1>
+        <div className="glass-panel-wrap">
+          <h1 className="glass-panel glass-panel-title font-semibold tracking-tight text-white">
+            {title}
+          </h1>
+        </div>
         {subtitle ? (
-          <p className="glass-panel glass-panel-subtitle text-white/80">
-            {subtitle}
-          </p>
+          <div className="glass-panel-wrap">
+            <p className="glass-panel glass-panel-subtitle text-white/80">
+              {subtitle}
+            </p>
+          </div>
         ) : null}
       </div>
     </section>

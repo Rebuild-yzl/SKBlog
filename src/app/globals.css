@@ -8,7 +8,8 @@
 
 :root {
   color-scheme: light;
-  --background: #fafafa; /* zinc-50，即页面内容原本的底色 */
+  --background: #fafafa;
+  /* zinc-50，即页面内容原本的底色 */
   --foreground: #171717;
   --border: #e4e4e7;
 }
@@ -33,6 +34,7 @@
  * 这里补回来，让所有边框默认使用 --border，需要时用 border-<color> 覆盖。
  */
 @layer base {
+
   *,
   ::before,
   ::after,
@@ -42,19 +44,55 @@
 }
 
 /*
- * 毛玻璃小面板（贴在图片/背景上的文字块）统一走这三个工具类，不要在组件里重复写这些值：
+ * 毛玻璃小面板（贴在图片/背景上的文字块）统一走这几个工具类，不要在组件里重复写这些值：
  *
- *   glass-panel           面板外观：半透明深色底 + 背景模糊 + 圆角 + 内边距
+ *   glass-panel           面板本体：半透明深色底 + 背景模糊 + 圆角 + 内边距
  *                         = bg-black/30 + backdrop-blur-sm（blur(8px)）
  *                         + 圆角 11px + 左右内边距 8px（上下 0）
+ *   glass-panel-wrap      面板外壳：只提供定位，描边是它的 ::after
  *   glass-panel-title     标题字号：小屏 14px / 20px，≥ 640px 36px / 40px
  *   glass-panel-subtitle  副标题字号：小屏 10px / 15px，≥ 640px 18px / 28px
  */
 @utility glass-panel {
-  @apply bg-black/30 backdrop-blur-sm;
+  @apply backdrop-blur-sm;
   border-radius: 11px;
-  padding-inline: 0.5rem; /* px-2：左右各 8px */
-  padding-block: 0; /* 上下不留白 */
+  padding-inline: 0.5rem;
+  /* px-2：左右各 8px */
+  padding-block: 0;
+  /* 上下不留白 */
+  background-color: rgb(0 0 0 / 0.3);
+}
+
+/*
+ * 面板外壳：只提供一个 relative 定位，描边是它的 ::after。
+ *
+ * 描边必须画在面板【外面】：面板自己的 backdrop-filter 会创造一个 backdrop root，
+ * 它内部的一切（包括 ::before / ::after）都只能采样到面板内部那层已压暗、已模糊的合成结果，
+ * 再怎么提高 brightness 也亮不起来（实测：写在面板内部的伪元素环，边缘亮度 126，比旁边的 140 还暗）。
+ * 放到外壳上之后，它采样的是原始图像，边缘会明显亮于面板内部。
+ *
+ * 四个可调点：
+ *   inset   环相对面板边缘的位置；负值越大环越往外（-1px = 完全落在面板外，只采样原图）
+ *   padding + mask  决定环的宽度（这里挖出 1px 一圈）
+ *   blur    与面板保持一致，两边才是同一层玻璃的观感
+ *   滤镜链  按顺序作用：blur（糊）→ brightness（提亮）→ saturate（补回被提亮冲淡的颜色，避免亮边发灰发白）
+ */
+@utility glass-panel-wrap {
+  position: relative;
+
+  &::after {
+    content: "";
+    position: absolute;
+    inset: -0.5px;
+    border-radius: 12px;
+    padding: 1px;
+    backdrop-filter: blur(8px) brightness(2) saturate(2);
+    mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    mask-composite: exclude;
+    pointer-events: none;
+  }
 }
 
 @utility glass-panel-title {
