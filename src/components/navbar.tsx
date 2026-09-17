@@ -24,8 +24,8 @@ export default function NavBar() {
     // 外层只管吸顶与外边距：带 backdrop-filter 的元素会成为 backdrop root（模糊只能采到它自身的内容），
     // 所以折叠菜单必须与胶囊本体平级，不能嵌在胶囊内部
     <nav className="m-4 sticky top-4 z-50">
-      {/* 胶囊本体：圆角与内边距单独设置 */}
-      <div className="glass-bar rounded-full p-4">
+      {/* 胶囊本体：圆角与内边距单独设置；glass-edge 的环采样「被模糊后的内容」，两者叠出采样描边 */}
+      <div className="glass-bar glass-edge glass-edge-solid rounded-full p-4">
         <div className="flex items-center justify-between gap-4">
           <p>NeuroSaiKou</p>
 
@@ -76,7 +76,7 @@ export default function NavBar() {
       {open && (
         <div
           id="nav-menu"
-          className="glass-bar absolute inset-x-0 top-full mt-2 flex flex-col gap-1 rounded-3xl p-2 md:hidden"
+          className="glass-bar glass-edge glass-edge-solid absolute inset-x-0 top-full mt-2 flex flex-col gap-1 rounded-3xl p-2 md:hidden"
         >
           {links.map((link) => (
             <Link

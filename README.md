@@ -93,25 +93,45 @@ src/
 | 工具类 | 作用 | 小屏（< 640px） | ≥ 640px（`sm:`） |
 | --- | --- | --- | --- |
 | `glass-panel` | 面板外观 | `bg-black/30` + `backdrop-blur-sm`（`blur(8px)`）、圆角 `11px`、左右内边距 `8px`、上下 `0` | 同左（不随断点变化） |
-| `glass-panel-wrap` | 面板外壳：定位 + `::after` 画采样背景的描边 | `inset: -0.5px`、`padding: 1px` + mask 挖出 1px 环、`backdrop-filter: blur(8px) brightness(2) saturate(2)`、圆角 `12px` | 同左 |
+| `glass-edge` | 采样描边（通用）：只管 `::after` 画环，四个参数全走 `:root` 令牌 | `--glass-edge-inset: -0.5px`、`--glass-edge-width: 1px`、`--glass-edge-filter: blur(8px) brightness(2) saturate(2)`、`--glass-edge-tint: transparent`，加 mask 挖环、圆角 `inherit` | 同左 |
+| `glass-edge-solid` | 只把 `--glass-edge-tint` 换成 `--border` 55% 兜底，环的其它样式一概不碰 | 与 `glass-edge` 同时使用 | 同左 |
 | `glass-panel-title` | 标题字号 | `14px` / 行高 `20px` | `36px` / 行高 `40px` |
 | `glass-panel-subtitle` | 副标题字号 | `10px` / 行高 `15px` | `18px` / 行高 `28px` |
 
-用法：面板本体用 `glass-panel`，外面套一层 `glass-panel-wrap`（它只提供定位，描边是它的 `::after`）；文字再按层级叠加字号类，颜色与字重仍然由组件自己决定。
+用法：目标元素包进一层 `glass-edge`，圆角要与目标对齐（`::after` 用 `inherit`）；目标自己没有 `backdrop-filter` 时（卡片、导航胶囊）可以直接把 `glass-edge` 加在它自己身上，只有自带 `backdrop-filter` 的面板需要外套一层：
 
 ```tsx
-<div className="glass-panel-wrap">
+// 面板：自带 backdrop-filter，必须外套一层（环才能采样到面板外侧的原图）
+<div className="glass-edge rounded-[12px]">
   <h1 className="glass-panel glass-panel-title font-semibold tracking-tight text-white">
 </div>
+
+// 卡片：内部就是图片，inset 设 0 让环压在图上；此时不要再用 border-2，否则会变成双层边
+<section className="glass-edge overflow-hidden rounded-3xl [--glass-edge-inset:0px] …">
+
+// 纯色背景上的卡片/导航：加 glass-edge-solid 兜底，边框才不会因为「提亮纯色」而消失
+<section className="glass-edge glass-edge-solid rounded-3xl bg-white …">
+<div className="glass-bar glass-edge glass-edge-solid rounded-full p-4 …">
 ```
+
+**想调环的样子，只改 `:root` 里的四个令牌**（环本身不写死值）：
+
+| 令牌 | 默认值 | 作用 |
+| --- | --- | --- |
+| `--glass-edge-inset` | `-0.5px` | 环相对边缘的位置：负值骑在边上、一半采样外部；设 `0px` 则完全坐落在目标内部 |
+| `--glass-edge-width` | `1px` | 环宽 |
+| `--glass-edge-filter` | `blur(8px) brightness(2) saturate(2)` | 环的滤镜链 |
+| `--glass-edge-tint` | `transparent` | 固定在环上的一层色调，不采样背景（`glass-edge-solid` 就是把它换成 `--border` 55%） |
+
+单个位置要单独调，在元素上写任意属性覆盖即可（如 `[--glass-edge-inset:0px]`）—— 令牌默认值写在 `:root`，任意属性的优先级始终更高。新位置也只需要 `glass-edge` + 需要时加 `glass-edge-solid`。
 
 说明：字号类之间是互斥的（标题用 `glass-panel-title`、副标题用 `glass-panel-subtitle`）；圆角在移动端视觉上接近胶囊形，因为 `11px` 会被浏览器按面板高度的一半裁切，这是有意保留的效果。
 
-描边不用固定颜色（纯色看着太平、像贴了一圈塑料），而是让它去**采样面板外面的原始图像**并提亮：`glass-panel-wrap::after` 用 `inset: -0.5px` 贴在面板边缘上，`padding: 1px` + `mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)` + `mask-composite: exclude` 挖出 1px 的一圈，滤镜是 `blur(8px) brightness(2) saturate(2)`。
+描边不用固定颜色（纯色看着太平、像贴了一圈塑料），而是让它去**采样边缘背后的内容**并提亮：`glass-edge::after` 骑在边上（`inset: -0.5px`，也能用 `[--glass-edge-inset:0px]` 改成完全落在内侧，适合内部就是图片的卡片），`padding: var(--glass-edge-width)` + `mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)` + `mask-composite: exclude` 挖出 1px 的一圈，滤镜链来自 `--glass-edge-filter`。
 
-滤镜链按顺序作用，三个参数各司其职：`blur` 与面板保持一致（两边才是同一层玻璃的观感）；`brightness` 控制亮边强度；`saturate` 补回被提亮冲淡的颜色 —— 提亮会把亮部推向白色、压缩色差，不加饱和度这条边会显得发灰发白，而不是「被照亮」。背景亮则边亮、背景暗则边暗。
+滤镜链按顺序作用，三个参数各司其职：`blur` 与目标保持一致（两边才是同一层玻璃的观感）；`brightness` 控制亮边强度；`saturate` 补回被提亮冲淡的颜色 —— 提亮会把亮部推向白色、压缩色差，不加饱和度这条边会显得发灰发白，而不是「被照亮」。背景亮则边亮、背景暗则边暗。
 
-四个可调点：`inset`（负值越大环越往外，`-1px` 表示完全落在面板外、只采样原图）、`padding` + `mask`（环的宽度）、`blur`、滤镜链强度。不要描边就把 `glass-panel-wrap` 去掉。
+> **纯色背景上要加 `glass-edge-solid`**：效果靠采样得来，背景是纯色时提亮等于不变 —— 深色模式下纯黑提亮仍是黑，浅色模式下 `#fafafa` 提亮成白也看不出来。所以横幅卡片、图片上的文字面板直接用 `glass-edge`；个人名片卡片、导航胶囊这类背景是纯色的位置要叠 `glass-edge-solid`（它只把 `--glass-edge-tint` 换成 `color-mix(in oklab, var(--border) 55%, transparent)` 这层兜底色），否则浅色模式下边框会直接消失。觉得浅色模式下这条边比原来的 `--border` 淡，把 55% 调高到 70~80% 即可。
 
 > **描边要画在面板外面（那层薄外壳上），不能写成面板自己的 `::before` / `::after`**：`glass-panel` 的 `backdrop-filter` 会创造一个「backdrop root」，它内部的一切（包括伪元素）只能采样到面板内部那层已压暗、已模糊的合成结果，所以再怎么提高 `brightness()` 也亮不起来。实测：写成面板内部伪元素时，边缘亮度只有 **126**，比旁边的 **140** 还暗；移到外壳上之后，边缘明显亮于面板内部。
 

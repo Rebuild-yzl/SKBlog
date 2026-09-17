@@ -12,6 +12,15 @@
   /* zinc-50，即页面内容原本的底色 */
   --foreground: #171717;
   --border: #e4e4e7;
+
+  /*
+   * 采样描边（glass-edge）的可配置令牌 —— 环的四个参数都集中在这里，改这一处就全局生效。
+   * 个别位置要单独调，在元素上写任意属性覆盖即可，例如 [--glass-edge-inset:0px]。
+   */
+  --glass-edge-filter: blur(8px) brightness(2) saturate(2);
+  --glass-edge-inset: -0.5px; /* 环相对边缘的位置：负值往外，越往外越只采样目标外面的内容 */
+  --glass-edge-width: 1px; /* 环宽 */
+  --glass-edge-tint: transparent; /* 纯色背景上的色调兜底，默认不加 */
 }
 
 .dark {
@@ -49,7 +58,8 @@
  *   glass-panel           面板本体：半透明深色底 + 背景模糊 + 圆角 + 内边距
  *                         = bg-black/30 + backdrop-blur-sm（blur(8px)）
  *                         + 圆角 11px + 左右内边距 8px（上下 0）
- *   glass-panel-wrap      面板外壳：只提供定位，描边是它的 ::after
+ *   glass-edge            采样描边（通用）：只管画环，参数全是令牌
+ *   glass-edge-solid      给采样描边叠一层 --border 色调兜底（纯色背景上用）
  *   glass-panel-title     标题字号：小屏 14px / 20px，≥ 640px 36px / 40px
  *   glass-panel-subtitle  副标题字号：小屏 10px / 15px，≥ 640px 18px / 28px
  */
@@ -64,35 +74,43 @@
 }
 
 /*
- * 面板外壳：只提供一个 relative 定位，描边是它的 ::after。
+ * 采样描边（通用）：给任何卡片/面板的一圈边缘做「采样背后的内容再提亮」的效果。
+ * 只管画环，四个参数全部来自 :root 里的 --glass-edge-* 令牌，环自身不写死值 ——
+ * 所以同一个类既能直接用在卡片上，也能外套在自带 backdrop-filter 的面板上。
  *
- * 描边必须画在面板【外面】：面板自己的 backdrop-filter 会创造一个 backdrop root，
- * 它内部的一切（包括 ::before / ::after）都只能采样到面板内部那层已压暗、已模糊的合成结果，
+ * 描边必须画在带 backdrop-filter 的元素【外面】：那个元素会创造一个 backdrop root，
+ * 它内部的一切（包括 ::before / ::after）都只能采样到它内部那层已压暗、已模糊的合成结果，
  * 再怎么提高 brightness 也亮不起来（实测：写在面板内部的伪元素环，边缘亮度 126，比旁边的 140 还暗）。
- * 放到外壳上之后，它采样的是原始图像，边缘会明显亮于面板内部。
  *
- * 四个可调点：
- *   inset   环相对面板边缘的位置；负值越大环越往外（-1px = 完全落在面板外，只采样原图）
- *   padding + mask  决定环的宽度（这里挖出 1px 一圈）
- *   blur    与面板保持一致，两边才是同一层玻璃的观感
- *   滤镜链  按顺序作用：blur（糊）→ brightness（提亮）→ saturate（补回被提亮冲淡的颜色，避免亮边发灰发白）
+ * 注意：这个效果靠「采样背景」得来，背景本身就是纯色时提亮等于不变，详见 glass-edge-solid。
  */
-@utility glass-panel-wrap {
+@utility glass-edge {
   position: relative;
 
   &::after {
     content: "";
     position: absolute;
-    inset: -0.5px;
-    border-radius: 12px;
-    padding: 1px;
-    backdrop-filter: blur(8px) brightness(2) saturate(2);
+    inset: var(--glass-edge-inset);
+    border-radius: inherit;
+    padding: var(--glass-edge-width);
+    background-color: var(--glass-edge-tint);
+    backdrop-filter: var(--glass-edge-filter);
     mask:
       linear-gradient(#000 0 0) content-box,
       linear-gradient(#000 0 0);
     mask-composite: exclude;
     pointer-events: none;
   }
+}
+
+/*
+ * 纯色背景上的采样描边：只把「色调」令牌换成 --border 的 55% 兜底，不碰环的其它样式。
+ * 纯色背景没有东西可采样（深色模式下纯黑提亮仍是黑、浅色模式下 #fafafa 提亮成白也看不出来），
+ * 不加这层的话边框会直接“消失”；加了之后压在图片上依然是提亮效果占主导，纯色背景上也有稳定的边。
+ * 觉得浅色模式下比原来的 --border 淡，把 55% 调高到 70~80% 即可。
+ */
+@utility glass-edge-solid {
+  --glass-edge-tint: color-mix(in oklab, var(--border) 55%, transparent);
 }
 
 @utility glass-panel-title {
@@ -113,7 +131,7 @@
  * 注意别把它加到外层的 sticky 容器上 —— 那样绝对定位的折叠菜单会被一起裁掉。
  */
 @utility glass-bar {
-  @apply border-2 bg-zinc-50/70 backdrop-blur-sm dark:bg-black/60;
+  @apply bg-zinc-50/70 backdrop-blur-sm dark:bg-black/60;
   overflow: clip;
 }
 
