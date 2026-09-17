@@ -21,13 +21,13 @@ export default function Profile({
           alt={avatarAlt}
           width={280}
           height={280}
-          priority
+          loading="eager"
           className="h-28 w-28 shrink-0 rounded-full object-cover ring-2 ring-border"
         />
         <div className="flex flex-col gap-2">
-          <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+          <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">
             {name}
-          </h1>
+          </h2>
           <p className="text-zinc-600 dark:text-zinc-400">{description}</p>
         </div>
       </div>
