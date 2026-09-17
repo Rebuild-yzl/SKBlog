@@ -14,7 +14,7 @@ export default function Profile({
   avatarAlt = "Portrait of NeuroSaiKou",
 }: ProfileProps) {
   return (
-    <section className="w-full max-w-2xl rounded-3xl border-2 bg-white p-6 shadow-sm sm:p-8 dark:bg-zinc-950">
+    <section className="w-full rounded-3xl border-2 bg-white p-6 shadow-sm sm:p-8 lg:p-10 dark:bg-zinc-950">
       <div className="flex flex-col items-center gap-6 text-center sm:flex-row sm:text-left">
         <Image
           src={avatarSrc}
