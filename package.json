@@ -3,13 +3,17 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "notes:sync": "node scripts/sync-notes.mjs",
+    "predev": "npm run notes:sync",
     "dev": "next dev",
+    "prebuild": "npm run notes:sync",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"
   },
   "dependencies": {
     "@vercel/analytics": "^2.0.1",
+    "gray-matter": "^4.0.3",
     "next": "16.3.5",
     "react": "19.2.8",
     "react-dom": "19.2.8"
