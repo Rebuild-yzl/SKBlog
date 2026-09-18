@@ -4,9 +4,10 @@
   "private": true,
   "scripts": {
     "notes:sync": "node scripts/sync-notes.mjs",
-    "predev": "npm run notes:sync",
+    "icons:fetch": "node scripts/fetch-tool-icons.mjs",
+    "predev": "npm run notes:sync && npm run icons:fetch",
     "dev": "next dev",
-    "prebuild": "npm run notes:sync",
+    "prebuild": "npm run notes:sync && npm run icons:fetch",
     "build": "next build",
     "vercel-build": "npm run build",
     "start": "next start",

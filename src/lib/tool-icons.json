@@ -1,0 +1,9 @@
+[
+  { "slug": "cpp", "label": "C++" },
+  { "slug": "cmake", "label": "CMake" },
+  { "slug": "godot", "label": "Godot" },
+  { "slug": "python", "label": "Python" },
+  { "slug": "html", "label": "HTML" },
+  { "slug": "git", "label": "Git" },
+  { "slug": "github", "label": "GitHub" }
+]

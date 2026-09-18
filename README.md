@@ -76,17 +76,20 @@ src/
 │  ├─ projects/page.tsx      # 项目
 │  └─ works/page.tsx         # 作品
 ├─ lib/
-│  └─ notes.ts               # 笔记读取层：遍历 .notes/、按 frontmatter 过滤、组装出 Post
+│  ├─ notes.ts               # 笔记读取层：遍历 .notes/、按 frontmatter 过滤、组装出 Post
+│  └─ tool-icons.json        # 工具图标清单（slug + 名称），组件与抓取脚本共用
 └─ components/
    ├─ navbar.tsx             # 顶部导航（客户端组件：sticky 胶囊 + 半透明模糊，<768px 折叠为汉堡菜单，z-50）
    ├─ theme-toggle.tsx       # 明暗切换按钮（切 <html> 的 .dark 类 + 写 localStorage；menu / icon 两种形态）
    ├─ notice-card.tsx        # 错误页/404 共用的提示卡片（附两个按钮样式常量）
    ├─ nothing-here.tsx       # 空态占位（图标 + 两句文案，不套卡片）
    ├─ banner.tsx             # 横幅卡片：圆角边框，按 16:9 完整展示图片（不裁切），文字用 glass-panel 方块
-   └─ profile.tsx            # 个人名片（头像 + 名称 + 描述）
+   ├─ profile.tsx            # 个人名片（头像 + 名称 + 描述）
+   └─ profile-details.tsx    # 名片下方的补充信息：在校状态 / 地点 / 邮箱 / 工具图标（无卡片边框）
 
 scripts/
-└─ sync-notes.mjs            # 构建/开发前把笔记仓库同步到 .notes/（本地目录或 Git 两种来源）
+├─ sync-notes.mjs            # 构建/开发前把笔记仓库同步到 .notes/（本地目录或 Git 两种来源）
+└─ fetch-tool-icons.mjs      # 构建/开发前把工具图标抓到 public/icons/toolchain/（自托管，用户端不访问 CDN）
 
 cicd/                        # 给「笔记仓库」用的 CI 示例（本站点自己用不到）
 ├─ github/workflows/notify-blog.yml
