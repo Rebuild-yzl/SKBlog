@@ -156,9 +156,14 @@ function sync() {
   const url = withToken(repoUrl);
   if (existsSync(path.join(checkoutDir, ".git"))) {
     log(`更新 ${redact(repoUrl)} → ${checkoutDir}`);
-    // 缓存目录是可丢弃的产物，所以直接对齐远端；--depth 1 让它始终是浅克隆。
-    git(["fetch", "--depth", "1", "origin", ...(branch ? [branch] : [])], checkoutDir);
+    // 按「当前配置的地址」拉取，而不是缓存里记的 origin：换过笔记仓库（GitCode → Gitee 这种）
+    // 之后，旧缓存的 origin 还指着旧仓库，只 fetch origin 会静默地继续拉旧仓库 ——
+    // 而日志里显示的却是新地址，出问题时极难发现。
+    // --depth 1 让它始终保持浅克隆。
+    git(["fetch", "--depth", "1", url, ...(branch ? [branch] : [])], checkoutDir);
     git(["checkout", "--force", "--detach", "FETCH_HEAD"], checkoutDir);
+    // 顺手把 origin 对齐成不带凭据的地址，免得缓存里的配置和实际来源不一致
+    git(["remote", "set-url", "origin", repoUrl], checkoutDir);
   } else {
     log(`克隆 ${redact(repoUrl)} → ${checkoutDir}`);
     git([
