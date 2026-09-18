@@ -9,6 +9,7 @@
  *   SKBLOG_NOTES_REPO      笔记仓库的 Git 地址，例如 git@github.com:you/vault.git
  *   SKBLOG_NOTES_BRANCH    要拉取的分支，默认用仓库的默认分支
  *   SKBLOG_NOTES_TOKEN     HTTPS 私有仓库的访问令牌（日志里会打码）
+ *   SKBLOG_NOTES_USER      令牌对应的用户名；GitHub / GitCode / GitLab 可省略，Gitee 必填
  *   SKBLOG_NOTES_DIR       直接用本地目录当笔记仓库，设了就完全不联网（本地开发推荐）
  *   SKBLOG_NOTES_CHECKOUT  缓存目录，默认 .notes
  *   SKBLOG_SKIP_NOTES_SYNC 设为 1 时跳过同步，沿用已有缓存
@@ -67,6 +68,7 @@ loadEnvFiles();
 const repoUrl = process.env.SKBLOG_NOTES_REPO?.trim();
 const branch = process.env.SKBLOG_NOTES_BRANCH?.trim();
 const token = process.env.SKBLOG_NOTES_TOKEN?.trim();
+const notesUser = process.env.SKBLOG_NOTES_USER?.trim();
 const localDir = process.env.SKBLOG_NOTES_DIR?.trim();
 const checkoutDir = path.resolve(
   projectRoot,
@@ -93,11 +95,31 @@ function git(args, cwd) {
   });
 }
 
+/**
+ * 各平台把「用户名」放在哪里并不一样，所以拉私有仓库时的凭据形式也不同：
+ *   GitHub / GitCode：用户名随便填（惯例 x-access-token），令牌当密码
+ *   GitLab：用 oauth2（也接受真实账号名）
+ *   Gitee：官方要求「账号 + 密码」，即必须填真实账号名，令牌当密码
+ * 未知平台就要求显式给 SKBLOG_NOTES_USER —— 否则只会丢一句 Authentication failed 让人猜。
+ */
+const TOKEN_USERS = new Map([
+  ["github.com", "x-access-token"],
+  ["gitcode.com", "x-access-token"],
+  ["gitlab.com", "oauth2"],
+]);
+
 /** 把令牌塞进 HTTPS 地址；日志里只打印打码后的版本。 */
 function withToken(url) {
   if (!token || !url.startsWith("https://")) return url;
   const parsed = new URL(url);
-  parsed.username = "x-access-token";
+  const user = notesUser || TOKEN_USERS.get(parsed.hostname);
+  if (!user) {
+    fail(
+      `拉取私有笔记仓库需要用户名：请设置 SKBLOG_NOTES_USER（在 ${parsed.hostname} 上就是你的账号名），或改用带凭据的地址、SSH 地址。`,
+    );
+    return url;
+  }
+  parsed.username = user;
   parsed.password = token;
   return parsed.toString();
 }
