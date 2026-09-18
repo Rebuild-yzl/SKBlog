@@ -66,6 +66,7 @@ export default function ProfileDetails({
 
       <DetailGroup title="工具">
         {/* 图标行：窄屏自动换行；title 给鼠标悬停时的名称，alt 给读屏 */}
+        <div className="flex flex-wrap items-center">
         <div className="lightedge flex rounded-md p-0.5">
             <ul className="flex flex-wrap items-center gap-1">
               {tools.map(({ slug, label }) => (
@@ -76,12 +77,13 @@ export default function ProfileDetails({
                     width={24}
                     height={24}
                     unoptimized
-                    className="size-6"
+                    className="size-8"
                   />
                 </li>
               ))}
             </ul>
             </div>
+        </div>
       </DetailGroup>
       <DetailGroup title="关于我">
         <p className="text-sm text-zinc-600 dark:text-zinc-400">
@@ -94,7 +96,16 @@ export default function ProfileDetails({
         </p>
         <div className="ml-2 border-l-2 border-zinc-200 pl-4 dark:border-zinc-700">
           <DetailGroup title="本站技术栈">
-            <p>Next.js</p>
+            <ul className="flex flex-col gap-1 text-sm text-zinc-600 dark:text-zinc-400">
+              <li>框架：Next.js 16（App Router，文章在构建时预渲染成静态页）</li>
+              <li>语言 / UI：TypeScript（strict）+ React 19</li>
+              <li>样式：Tailwind CSS 4，高亮边框为自研的 lightedge 工具类</li>
+              <li>
+                内容：写在自己的笔记仓库里（Obsidian + Git），构建时同步，只发布
+                frontmatter 标了 publish: true 的笔记
+              </li>
+              <li>部署：Vercel</li>
+            </ul>
           </DetailGroup>
           <DetailGroup title="本站开源">
             <p className="text-sm text-zinc-600 dark:text-zinc-400">

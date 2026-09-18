@@ -27,10 +27,15 @@ NeuroSaiKou 的个人网站 —— 用来放博客、作品、项目与收藏的
 | UI 库 | React 19.2.8 |
 | 语言 | TypeScript 5（`strict`） |
 | 样式 | Tailwind CSS 4 + PostCSS（`@tailwindcss/postcss`） |
-| 代码检查 | ESLint 9 + `eslint-config-next` |
+| 设计系统 | Tailwind 4 的 `@theme` / `@utility`：`glass-panel`、`lightedge`（采样描边）、`glass-bar`，详见 [docs/styling.md](./docs/styling.md) |
+| 内容来源 | 独立的**笔记仓库**（Obsidian vault 的 Git 仓库），构建时用 `git` 浅克隆同步，详见 [docs/notes-sync.md](./docs/notes-sync.md) |
 | 内容解析 | [gray-matter](https://github.com/jonschlinkert/gray-matter)（读取笔记 frontmatter；正文当前只做纯文本展示） |
-| 监控 | [@vercel/analytics](https://vercel.com/docs/analytics) |
+| 图标 | [skillicons.dev](https://skillicons.dev) 的图标在构建时抓取并自托管到 `public/`（访客不访问第三方 CDN） |
+| 字体 / 图片 | `next/font/google`（Geist / Geist Mono）、`next/image`（SVG 用 `unoptimized`） |
+| 代码检查 | ESLint 9 + `eslint-config-next` |
 | 编译优化 | React Compiler（`next.config.ts` 中 `reactCompiler: true`） |
+| 监控 | [@vercel/analytics](https://vercel.com/docs/analytics) |
+| 部署 / 自动化 | Vercel（`prebuild` 同步笔记 + 抓图标，`vercel-build` 兜底）；笔记仓库 push 经 Deploy Hook 触发重建，四个平台的示例见 [cicd/](./cicd) |
 
 > [!IMPORTANT]
 > 项目根目录的 `AGENTS.md`（由 `next dev` 自动写入）说明当前 Next.js 版本存在破坏性变更，要求改动代码前先阅读 `node_modules/next/dist/docs/` 下对应的指南，不要只依赖既有经验或旧文档。

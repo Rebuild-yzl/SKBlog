@@ -30,7 +30,11 @@ export default function Profile({
           />
           <div
             aria-hidden
-            className="lightedge lightedge-3 -lightedge-inset-5 lightedge-brightness-300 pointer-events-none absolute inset-0 rounded-full [--lightedge-tint:transparent]"
+            className="lightedge lightedge-5 lightedge-blur-8 -lightedge-inset-5 lightedge-brightness-150 pointer-events-none absolute inset-0 rounded-full [--lightedge-tint:transparent]"
+          />
+          <div 
+            aria-hidden
+            className="lightedge lightedge-2 -lightedge-inset-1 lightedge-blur-2 pointer-events-none lightedge-brightness-160 absolute inset-0 rounded-full [--lightedge-tint:transparent]"
           />
         </div>
         <div className="flex flex-col gap-2">

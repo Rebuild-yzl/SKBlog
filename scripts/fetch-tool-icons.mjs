@@ -46,7 +46,9 @@ function fail(message) {
  * 占位图（约 256 字节；真实图标 800~4600 字节）。所以除了状态码还要校验内容，
  * 否则清单里写错一个 slug，页面上只会默默多出一个问号图标。
  */
-async function fetchIcon(slug) {
+class PlaceholderIconError extends Error {}
+
+async function fetchIconOnce(slug) {
   const response = await fetch(`${endpoint}?i=${encodeURIComponent(slug)}`);
   if (!response.ok) {
     throw new Error(`HTTP ${response.status}`);
@@ -59,9 +61,30 @@ async function fetchIcon(slug) {
 
   const svg = await response.text();
   if (svg.length <= 400 || svg.includes("undefined")) {
-    throw new Error("拿到的是占位图，slug 可能写错了");
+    throw new PlaceholderIconError("拿到的是占位图，slug 可能写错了");
   }
   return svg;
+}
+
+/*
+ * 构建时依赖外网，网络抖动（DNS 失败、连接被重置）会让单个图标莫名其妙地缺失，
+ * 所以失败重试两次再放弃；但「占位图」是 slug 写错，重试没用，直接抛出去。
+ */
+async function fetchIcon(slug) {
+  const attempts = 3;
+  let lastError;
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    try {
+      return await fetchIconOnce(slug);
+    } catch (error) {
+      lastError = error;
+      if (error instanceof PlaceholderIconError) break;
+      if (attempt < attempts) {
+        await new Promise((resolve) => setTimeout(resolve, attempt * 500));
+      }
+    }
+  }
+  throw lastError;
 }
 
 async function main() {
@@ -70,7 +93,22 @@ async function main() {
     return;
   }
 
-  const tools = JSON.parse(readFileSync(registryFile, "utf8"));
+  // 先校验清单结构：JSON 里少写或写错键名（典型是把 label 写成 lable）时，
+  // TypeScript 只会抛一段"联合类型不能赋值"的难懂错误，这里直接点名第几项。
+  const tools = JSON.parse(readFileSync(registryFile, "utf8")).filter(
+    (tool, index) => {
+      const hasSlug = typeof tool?.slug === "string" && tool.slug.trim() !== "";
+      const hasLabel =
+        typeof tool?.label === "string" && tool.label.trim() !== "";
+      if (!hasSlug || !hasLabel) {
+        const hint = tool?.lable ? "（是不是把 label 写成了 lable？）" : "";
+        fail(
+          `tool-icons.json 第 ${index + 1} 项缺少 ${hasSlug ? "label" : "slug"}${hint}`,
+        );
+      }
+      return hasSlug && hasLabel;
+    },
+  );
   mkdirSync(outputDir, { recursive: true });
 
   const failed = [];
