@@ -1,0 +1,20 @@
+[
+  { "slug": "vscode", "label": "VS Code" },
+  { "slug": "obsidian", "label": "Obsidian" },
+  { "slug": "blender", "label": "Blender" },
+  { "slug": "md", "label": "Markdown" },
+  { "slug": "latex", "label": "LaTeX" },
+  { "slug": "cpp", "label": "C++" },
+  { "slug": "vercel", "label": "Vercel" },
+  { "slug": "godot", "label": "Godot Engine" },
+  { "slug": "unreal", "label": "Unreal Engine" },
+  { "slug": "python", "label": "Python" },
+  { "slug": "cs", "label": "C#" },
+  { "slug": "git", "label": "Git" },
+  { "slug": "github", "label": "GitHub" },
+  { "slug": "ts", "label": "TypeScript" },
+  { "slug": "nextjs", "label": "Next.js" },
+  { "slug": "ubuntu", "label": "Ubuntu" },
+  { "slug": "cmake", "label": "CMake" },
+  { "slug": "tailwind", "label": "Tailwind CSS" }
+]

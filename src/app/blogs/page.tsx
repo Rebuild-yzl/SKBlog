@@ -15,7 +15,7 @@ export default function Blogs() {
     return (
       <NothingHere
         title="No posts yet"
-        description="笔记仓库里还没有标记 publish: true 的笔记。"
+        description="未发现笔记"
       />
     );
   }
@@ -27,7 +27,7 @@ export default function Blogs() {
           Blogs
         </h1>
         <p className="text-sm text-zinc-600 dark:text-zinc-400">
-          {`${posts.length} 篇，来自笔记仓库中标记了 publish: true 的笔记。`}
+          {`${posts.length} 篇笔记`}
         </p>
       </header>
 

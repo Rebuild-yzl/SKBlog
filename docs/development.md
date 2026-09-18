@@ -11,4 +11,5 @@
 - **字体**：使用 `next/font/google` 加载 Geist 与 Geist Mono，以 CSS 变量 `--font-geist-sans` / `--font-geist-mono` 暴露。
 - **层叠顺序**：导航栏是 `sticky top-4 z-50`；排在导航之后的定位元素（`relative` / `absolute`）默认会盖住导航，改动布局时要留意。
 - **图片**：`public/` 下的图片用 `<Image src="/banner.jpg" … />` 引用。Next 16 已弃用 `priority`，首屏图片改用 `loading="eager"`；不裁切地铺满容器宽度时用 `fill` + `sizes="100vw"` + 与图片同比例的外框（现有配图都是 16:9，用 `aspect-video`）。配图请控制在 **2560px 宽以内**：源图过大时，优化器首次生成某个宽度可能要几十秒（实测 10000px 源图出现超过 60s 不返回的情况），这期间浏览器拿不到图片，横幅会一直是一片空白。
+- **第三方图标/图片**：不要在 JSX 里直接写外链——那会让每个访客去请求第三方 CDN（还可能被墙），页面也就依赖了一个我们控制不了的服务。需要外部图标时走「构建时抓取 + 自托管」：清单是唯一来源（例如工具图标放在 `src/lib/tool-icons.json`），由 `scripts/` 下的脚本在 `predev` / `prebuild` 里抓到 `public/icons/`（该目录已 gitignore），页面用 `<Image unoptimized />` 引用本地路径（Next 默认不优化 SVG）。脚本的失败策略与 `notes:sync` 一致：CI 严格失败、本地只警告，日志分别以 `[notes]` / `[icons]` 开头。
 - **新增页面**：在 `src/app` 下建目录 + `page.tsx`，同时别忘了在 `src/components/navbar.tsx` 顶部的 `links` 数组里补上导航链接（数组同时驱动桌面端链接行和移动端折叠菜单，只需加一条）。

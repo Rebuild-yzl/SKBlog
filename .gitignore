@@ -43,3 +43,6 @@ next-env.d.ts
 
 # 笔记仓库缓存（由 scripts/sync-notes.mjs 拉取，产物不入库）
 /.notes/
+
+# 工具图标（由 scripts/fetch-tool-icons.mjs 抓取，产物不入库）
+/public/icons/toolchain/
