@@ -4,7 +4,7 @@
 
 ## Vercel 配置
 
-1. **环境变量**：加 `SKBLOG_NOTES_REPO`；笔记仓库是私有的再加 `SKBLOG_NOTES_TOKEN`（Fine-grained token，只给 **Contents: Read**），公开仓库不用配 token。
+1. **环境变量**：加 `SKBLOG_NOTES_REPO`；笔记仓库是私有的再加 `SKBLOG_NOTES_TOKEN`（GitHub 用 Fine-grained token，只给 **Contents: Read**），其中 **Gitee 还必须加 `SKBLOG_NOTES_USER` 填账号名**（它要求「账号 + 令牌」），GitHub / GitCode / GitLab 可不填。公开仓库不用配 token。
 2. **构建命令保持默认**，不要改成直接跑 `next build`：Next.js 项目下 Vercel 会用 `package.json` 的 `build` 脚本，`prebuild` 才会执行、笔记才会被拉取。为了不依赖这个默认行为，`package.json` 里另有一条 `"vercel-build": "npm run build"` 兜底。拉取失败会直接让部署失败（而不是把空博客发上线），日志里以 `[notes]` 开头。
 3. **push 笔记后自动重新部署**：Vercel 只监听站点仓库，这一步要在笔记仓库侧配置，见下节。
 
@@ -32,3 +32,4 @@
 1. 构建日志里有没有 `[notes]` 开头的行 —— 没有就说明同步脚本没被触发（构建命令被人改成直接跑 `next build` 了）
 2. 有 `[notes]` 但提示"未配置笔记仓库" —— 环境变量没配或没生效
 3. 拉取成功但没有文章 —— 笔记的 frontmatter 是否写了 `publish: true`，见[博客内容](./notes-sync.md)
+4. 报 `Authentication failed` / `could not read Username` —— 私有仓库的凭据不对：核对 `SKBLOG_NOTES_TOKEN`，以及 Gitee 是否漏了 `SKBLOG_NOTES_USER`

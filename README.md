@@ -120,7 +120,7 @@ docs/                        # 详细文档（见文末[文档](#文档)一节�
 站点是标准的 Next.js 应用，推荐用 [Vercel](https://vercel.com/new)（Next.js 官方平台，零配置）：
 
 1. 把仓库推到 GitHub，在 Vercel 里 Import 这个仓库
-2. 在项目的 Environment Variables 里加 `SKBLOG_NOTES_REPO` 指向笔记仓库；笔记仓库是私有的再加 `SKBLOG_NOTES_TOKEN`（Fine-grained token，只给 **Contents: Read**）
+2. 在项目的 Environment Variables 里加 `SKBLOG_NOTES_REPO` 指向笔记仓库；笔记仓库是私有的再加 `SKBLOG_NOTES_TOKEN`（GitHub 用 Fine-grained token，只给 **Contents: Read**），Gitee 这类要「账号 + 令牌」的平台还要加 `SKBLOG_NOTES_USER`
 3. 构建命令保持默认：Vercel 会执行 `package.json` 的 `build` 脚本，`prebuild` 里的同步脚本把笔记仓库拉到 `.notes/`，所以线上内容和笔记仓库保持一致
 4. 想让"push 笔记"也自动触发重新部署，还要在**笔记仓库**侧加一个 Deploy Hook 调用（[cicd/](./cicd) 里有四个平台的示例）
 

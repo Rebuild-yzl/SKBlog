@@ -45,6 +45,7 @@ publish: true
 | `SKBLOG_NOTES_REPO` | 无 | 笔记仓库地址。私有仓库用 HTTPS + `SKBLOG_NOTES_TOKEN`，或让 CI 走 SSH（`git@github.com:...`） |
 | `SKBLOG_NOTES_BRANCH` | 仓库默认分支 | 只拉这个分支 |
 | `SKBLOG_NOTES_TOKEN` | 无 | 注入到 HTTPS 地址里的访问令牌（日志里会打码） |
+| `SKBLOG_NOTES_USER` | GitHub / GitCode / GitLab 有默认值 | 令牌对应的用户名。Gitee 必须显式填账号名（它的私有仓库 clone 要「账号 + 令牌」），其它平台填了会覆盖默认值 |
 | `SKBLOG_NOTES_DIR` | 无 | 直接用本地目录当笔记仓库，设了就完全不联网（本地开发推荐；相对路径按项目根解析） |
 | `SKBLOG_NOTES_CHECKOUT` | `.notes` | 缓存目录 |
 | `SKBLOG_NOTES_SUBDIR` | 仓库根 | 只扫描某个子目录（例如 `Blog`），把候选范围收窄 |
@@ -88,7 +89,7 @@ PowerShell 里对应 `$env:SKBLOG_NOTES_DIR="..\notes-vault"; npm run dev`（关
 
 - **必须是一个 Git 仓库**，托管在 GitHub / GitLab / GitCode / Gitee 等任意平台；分支名随意（示例用默认分支，GitLab 那份用 `$CI_DEFAULT_BRANCH` 自动适配）。
 - **笔记是 Markdown**，frontmatter 里写 `publish: true` 才会发布；没写、写 `false`、写错字段名（例如 `public`）都不会上站。
-- **Vercel 构建时必须能读到它**：公开仓库直接配 `SKBLOG_NOTES_REPO`；私有仓库用 HTTPS + `SKBLOG_NOTES_TOKEN`，或让 CI 用 SSH 地址 + deploy key。
+- **Vercel 构建时必须能读到它**：公开仓库直接配 `SKBLOG_NOTES_REPO`；私有仓库用 HTTPS + `SKBLOG_NOTES_TOKEN`（**Gitee 还要配 `SKBLOG_NOTES_USER` 填账号名**，GitHub / GitCode / GitLab 可不填），或改用带凭据的地址、SSH 地址 + deploy key。
 - **不需要在笔记仓库里放任何站点代码**，也不需要在里面跑构建 —— 站点是构建时来拉取它的。
 - `.obsidian/` 这类隐藏目录可以照常提交（同步与读取都会跳过），但**不要把密钥写进笔记**：白名单只保证"没标 `publish` 的不上站"，标了 `publish: true` 的那篇会被原样发布。
 
