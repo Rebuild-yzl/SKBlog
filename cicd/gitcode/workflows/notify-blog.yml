@@ -1,0 +1,25 @@
+# 复制到「笔记仓库」的 .gitcode/workflows/notify-blog.yml
+#
+# 注意目录是 .gitcode/workflows/，不是 .github/workflows/ 或 ./workflows/，
+# 路径不对流水线不会被识别。
+#
+# 需要先在笔记仓库「项目设置 → Action 秘钥与变量」里新增：
+#   SKBLOG_DEPLOY_HOOK = Vercel 项目 Settings → Git → Deploy Hooks 生成的地址
+#
+# 另外：GitCode 的代码化流水线按官方文档需要先开通「流水线」能力；
+# 没开通的话用仓库 WebHook 触发 Deploy Hook 同样可行（见 cicd/gitee/README.md）。
+
+name: Notify blog
+
+on:
+  push:
+    # 改成笔记仓库的默认分支（GitCode 新建仓库默认是 master）
+    branches: [master]
+
+jobs:
+  notify:
+    name: Trigger Vercel deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Vercel deploy hook
+        run: curl -fsS -X POST "${{ secrets.SKBLOG_DEPLOY_HOOK }}"

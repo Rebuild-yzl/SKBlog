@@ -1,0 +1,16 @@
+# 复制到「笔记仓库」根目录的 .gitlab-ci.yml
+#
+# 需要先在笔记仓库里配置 CI/CD variable（Settings → CI/CD → Variables）：
+#   SKBLOG_DEPLOY_HOOK = Vercel 项目 Settings → Git → Deploy Hooks 生成的地址
+#   记得勾上 Masked（变量值不会出现在日志里）
+
+stages: [notify]
+
+notify-blog:
+  stage: notify
+  image: curlimages/curl:8.10.1
+  # $CI_DEFAULT_BRANCH 由 GitLab 提供，默认分支是 main 还是 master 都不用改
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  script:
+    - curl -fsS -X POST "$SKBLOG_DEPLOY_HOOK"

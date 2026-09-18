@@ -2,7 +2,7 @@
 
 NeuroSaiKou 的个人网站 —— 用来放博客、作品、项目与收藏的自我介绍型站点。
 
-目前处于早期开发阶段：首页与 About 页有实际内容，其余页面均复用一个「建设中」占位组件。
+目前处于早期开发阶段：首页与 About 页有实际内容，`/blogs` 已接上笔记仓库（见[博客内容](#博客内容笔记仓库同步)），其余页面仍复用「建设中」占位组件。
 
 ## 技术栈
 
@@ -13,6 +13,7 @@ NeuroSaiKou 的个人网站 —— 用来放博客、作品、项目与收藏的
 | 语言 | TypeScript 5（`strict`） |
 | 样式 | Tailwind CSS 4 + PostCSS（`@tailwindcss/postcss`） |
 | 代码检查 | ESLint 9 + `eslint-config-next` |
+| 内容解析 | [gray-matter](https://github.com/jonschlinkert/gray-matter)（读取笔记 frontmatter；正文当前只做纯文本展示） |
 | 监控 | [@vercel/analytics](https://vercel.com/docs/analytics) |
 | 编译优化 | React Compiler（`next.config.ts` 中 `reactCompiler: true`） |
 
@@ -28,10 +29,13 @@ npm run dev
 
 打开 [http://localhost:3000](http://localhost:3000) 查看效果。编辑页面文件会自动热更新。
 
+博客正文存放在**独立的笔记仓库**里，本地要先指一下笔记目录才能在 `/blogs` 看到文章（`SKBLOG_NOTES_DIR` 或 `SKBLOG_NOTES_REPO`，见[博客内容](#博客内容笔记仓库同步)；不配也能跑，只是 `/blogs` 是空态）。
+
 ## 可用脚本
 
 | 命令 | 说明 |
 | --- | --- |
+| `npm run notes:sync` | 把笔记仓库同步到 `.notes/`（`dev` / `build` 通过 npm 的 pre 钩子自动调用，一般不用手动执行） |
 | `npm run dev` | 启动开发服务器（默认使用 Turbopack，React Compiler 生效） |
 | `npm run build` | 生产环境构建 |
 | `npm start` | 运行生产构建产物 |
@@ -50,11 +54,14 @@ src/
 │  ├─ global-error.tsx       # 最外层错误边界：替换根布局，自带 <html>/<body>/全局样式/主题
 │  ├─ about/page.tsx         # 关于
 │  ├─ analytics/page.tsx     # 访问统计（Vercel Analytics）
-│  ├─ blogs/page.tsx         # 博客
+│  ├─ blogs/page.tsx         # 博客列表（笔记仓库里 publish: true 的笔记）
+│  ├─ blogs/[slug]/page.tsx  # 博客详情（构建期由 generateStaticParams 生成静态页）
 │  ├─ favorites/page.tsx     # 收藏
 │  ├─ participate/page.tsx   # 参与
 │  ├─ projects/page.tsx      # 项目
 │  └─ works/page.tsx         # 作品
+├─ lib/
+│  └─ notes.ts               # 笔记读取层：遍历 .notes/、按 frontmatter 过滤、组装出 Post
 └─ components/
    ├─ navbar.tsx             # 顶部导航（客户端组件：sticky 胶囊 + 半透明模糊，<768px 折叠为汉堡菜单，z-50）
    ├─ theme-toggle.tsx       # 明暗切换按钮（切 <html> 的 .dark 类 + 写 localStorage；menu / icon 两种形态）
@@ -62,6 +69,9 @@ src/
    ├─ nothing-here.tsx       # 空态占位（图标 + 两句文案，不套卡片）
    ├─ banner.tsx             # 横幅卡片：圆角边框，按 16:9 完整展示图片（不裁切），文字用 glass-panel 方块
    └─ profile.tsx            # 个人名片（头像 + 名称 + 描述）
+
+scripts/
+└─ sync-notes.mjs            # 构建/开发前把笔记仓库同步到 .notes/（本地目录或 Git 两种来源）
 ```
 
 ## 路由一览
@@ -69,13 +79,125 @@ src/
 - [x] `/` — Home：已有内容
 - [x] `/about` — About：横幅卡片 + 个人名片卡片
 - [ ] `/analytics` — Analytics：仅挂载 Vercel Analytics
-- [ ] `/blogs` — Blogs：空态占位（`NothingHere`）
+- [x] `/blogs` — Blogs：列表 + 详情（`/blogs/[slug]`），内容来自笔记仓库（见下节）；仓库里没有 `publish: true` 的笔记时仍是空态占位
 - [ ] `/favorites` — Favorites：空态占位（`NothingHere`）
 - [ ] `/participate` — Participate：空态占位（`NothingHere`）
 - [ ] `/projects` — Projects：空态占位（`NothingHere`）
 - [ ] `/works` — Works：空态占位（`NothingHere`）
 - [x] 404 — 未匹配路由（`not-found.tsx`）
 - [x] 错误页 — 页面渲染出错（`error.tsx`）/ 根布局出错（`global-error.tsx`）
+
+## 博客内容（笔记仓库同步）
+
+博客正文的真源在**笔记仓库**（Obsidian vault 的 Git 仓库），站点仓库只负责渲染，两者按「构建时拉取」连接，笔记仓库始终只读：
+
+```
+笔记仓库 push ──▶ npm run build（prebuild 先跑 notes:sync）
+                     │  scripts/sync-notes.mjs：把仓库浅克隆到 .notes/（已 gitignore）
+                     │  src/lib/notes.ts：遍历 .notes/、解析 frontmatter、只留 publish: true
+                     └▶ /blogs 列表页 + /blogs/[slug] 静态页
+```
+
+### 发布规则（白名单）
+
+只有 frontmatter 里显式写了 `publish: true` 的笔记会上站；**没写、写 `false`、类型不对的一律跳过**。私有笔记、草稿、随手记不需要额外处理，默认就是不上站。
+
+### frontmatter 字段
+
+| 字段 | 必填 | 说明 |
+| --- | --- | --- |
+| `publish` | 是 | 只有 `true` 才上站（字符串 `"true"` 也认） |
+| `title` | 否 | 页面标题。缺省用文件名（**不读正文里的 `# 标题`**：正文标题是给人看的，改了不该连带动列表页与 `<title>`） |
+| `date` | 否 | `YYYY-MM-DD` 或完整时间。缺省时先取文件名开头的 `YYYY-MM-DD`，最后退到文件修改时间 |
+| `slug` | 否 | URL 标识。缺省由文件名推导：转小写、空格与下划线变 `-`、其它符号去掉。中文会保留，URL 里以百分号编码传输，编码前后的两种链接都能访问（`getPostBySlug` 会统一解码，因为 Next 传给页面组件的参数并不保证已解码） |
+| `description` | 否 | 列表页摘要，同时用作页面的 meta description |
+| `tags` | 否 | YAML 数组或逗号分隔字符串 |
+
+```yaml
+---
+title: 用 Next.js 做个博客
+date: 2026-03-05
+tags: [Next.js, 随笔]
+description: 笔记仓库与站点分离后的第一次尝试。
+publish: true
+---
+```
+
+> **关于 `date`**：构建时是浅克隆，文件的 mtime 就是检出时间，所以偷懒不写 `date` 会让所有笔记都显示成同一天。建议每篇都写，或让文件名以 `YYYY-MM-DD` 开头。
+
+两篇笔记推导出同一个 slug 时构建会直接失败（而不是静默丢掉一篇），按报错提示给其中一篇加 `slug` 即可。
+
+### 环境变量
+
+| 变量 | 默认 | 说明 |
+| --- | --- | --- |
+| `SKBLOG_NOTES_REPO` | 无 | 笔记仓库地址。私有仓库用 HTTPS + `SKBLOG_NOTES_TOKEN`，或让 CI 走 SSH（`git@github.com:...`） |
+| `SKBLOG_NOTES_BRANCH` | 仓库默认分支 | 只拉这个分支 |
+| `SKBLOG_NOTES_TOKEN` | 无 | 注入到 HTTPS 地址里的访问令牌（日志里会打码） |
+| `SKBLOG_NOTES_DIR` | 无 | 直接用本地目录当笔记仓库，设了就完全不联网（本地开发推荐；相对路径按项目根解析） |
+| `SKBLOG_NOTES_CHECKOUT` | `.notes` | 缓存目录 |
+| `SKBLOG_NOTES_SUBDIR` | 仓库根 | 只扫描某个子目录（例如 `Blog`），把候选范围收窄 |
+| `SKBLOG_SKIP_NOTES_SYNC` | 无 | 设为 `1` 跳过拉取，沿用已有缓存 |
+| `SKBLOG_NOTES_STRICT` | CI 下视为 `1` | 同步失败是否直接报错退出；本地默认只警告，方便离线调样式 |
+
+这些变量可以写在项目根的 `.env.local`（不提交）或 `.env`（可提交，用来放默认值）里，仓库里有一份 [`.env.example`](./.env.example) 可直接复制。加载优先级是 **命令行/CI 环境变量 > `.env.local` > `.env`**。
+
+> **为什么脚本要自己读 `.env.local`**：`npm run dev` / `npm run build` 前面的 pre 钩子是独立进程，Next 读 env 文件只发生在 `next` 自己的进程里，pre 钩子看不到。所以 `scripts/sync-notes.mjs` 启动时用 Node 内置的 `process.loadEnvFile()` 依次加载 `.env`、`.env.local`（它不覆盖已有的进程环境变量，优先级与 Next 一致），这样"写在 `.env.local` 里"两半都能读到。
+
+### 本地开发
+
+方式一（推荐）：写进 `.env.local`，之后一句 `npm run dev` 就够。
+
+```bash
+# .env.local
+SKBLOG_NOTES_REPO=https://github.com/you/notes.git
+
+# 想让站点直接读本地 vault（改完笔记刷新即可、完全离线）时改用这一行：
+# SKBLOG_NOTES_DIR=../notes-vault
+```
+
+方式二：只是临时试一次、不想落地成文件，就在命令行里给变量。
+
+```bash
+SKBLOG_NOTES_DIR=../notes-vault npm run dev
+```
+
+PowerShell 里对应 `$env:SKBLOG_NOTES_DIR="..\notes-vault"; npm run dev`（关掉窗口就失效）。
+
+> 第三种是写进系统环境变量 —— 不推荐：换机器、换项目时行为不透明，而且容易忘了自己设过。
+
+三条使用须知：
+
+- **改完 `.env.local` 要重启 dev 服务器**（env 文件只在进程启动时读一次）；改笔记内容本身不用重启。
+- 用仓库模式时，新增或修改笔记要先 push，再跑一次 `npm run notes:sync` 把 `.notes/` 更新下来（之后刷新页面即可）。想省掉这一步，就用 `SKBLOG_NOTES_DIR` 指向本地 vault。
+- `SKBLOG_NOTES_DIR` 优先级高于 `SKBLOG_NOTES_REPO`：两者同时存在时走本地目录，不联网、不克隆。
+
+### Vercel 配置
+
+1. 项目环境变量里加 `SKBLOG_NOTES_REPO` 和 `SKBLOG_NOTES_TOKEN`（Fine-grained token，只给笔记仓库 **Contents: Read**）。
+2. 构建命令保持默认的 `npm run build` —— `prebuild` 会先拉笔记；拉取失败会直接让部署失败，而不是把空博客发上线。
+3. Vercel 只监听站点仓库，**push 笔记本身不会触发重新部署**，需要在笔记仓库加一个 GitHub Action 调本项目的 [Deploy Hook](https://vercel.com/docs/deploy-hooks)：
+
+```yaml
+# 笔记仓库的 .github/workflows/notify-blog.yml
+name: Notify blog
+on:
+  push:
+    branches: [main]
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - run: curl -fsS -X POST "${{ secrets.SKBLOG_DEPLOY_HOOK }}"
+```
+
+> 上面这段针对 GitHub 上的笔记仓库。如果 vault 托管在别处（GitCode、Gitee、自建 GitLab 等），换成该平台的 CI / webhook 去请求同一个 Deploy Hook 地址即可——触发逻辑与平台无关，就是一句 HTTP POST。
+
+### 当前阶段的范围
+
+- 正文按**纯文本**输出（保留原始换行），不做 Markdown 渲染，也不转换 Obsidian 语法 —— `[[双链]]`、`![[嵌入]]`、`> [!note]` 都原样显示。渲染依赖（remark / rehype 那一套）留到接入时再装。
+- 图片与附件暂不处理，笔记里的图片引用不会出现在站点上。
+- 同步只往 `.notes/` 写，不会回改笔记仓库。
 
 ## 开发约定
 
@@ -184,9 +306,13 @@ src/
 
 部署前建议先执行 `npm run build` 和 `npm run lint` 确认无报错。
 
+若博客内容来自私有笔记仓库，别忘了在 Vercel 里配置 `SKBLOG_NOTES_REPO` / `SKBLOG_NOTES_TOKEN`，并给笔记仓库配好触发重新部署的 Deploy Hook，详见[博客内容](#博客内容笔记仓库同步)。
+
 ## 待办
 
 - [ ] 用正式内容替换各页面的 `NothingHere` 空态占位
+- [ ] 博客正文接入 Markdown 渲染（当前是纯文本输出），再逐步补 Obsidian 语法（`[[双链]]`、`![[嵌入]]`、callout）与图片/附件处理
+- [ ] 笔记仓库 push 后自动触发站点重新构建（笔记仓库的 GitHub Action 调 Vercel Deploy Hook）
 - [x] 更新 `src/app/layout.tsx` 中的 `metadata`（当前仍是 `Create Next App` / `Generated by create next app`）
 - [x] 移动端适配：导航栏在 < 768px（`md` 断点）折叠为汉堡菜单，原来 8 个链接撑出 690px 横向溢出的问题已解决（420~1280px 实测溢出均为 0）
 - [x] 压缩 `public/banner.jpg`：10000×5625（15.5 MB）→ 2560×1440（536 KB），比例不变，屏幕上看得见的分辨率没有损失（原图仍在 `fcdc453` 那个提交里，`git show fcdc453:public/banner.jpg > public/banner.jpg` 可取回）

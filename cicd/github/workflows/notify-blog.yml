@@ -1,0 +1,23 @@
+# 复制到「笔记仓库」的 .github/workflows/notify-blog.yml
+#
+# 需要先在笔记仓库里配置 Actions secret：
+#   SKBLOG_DEPLOY_HOOK = Vercel 项目 Settings → Git → Deploy Hooks 生成的地址
+
+name: Notify blog
+
+on:
+  push:
+    # 改成笔记仓库的默认分支（GitHub 新建仓库默认是 main）
+    branches: [main]
+
+# 连续提交时只保留最新一次：部署只需要最后一版内容
+concurrency:
+  group: notify-blog
+  cancel-in-progress: true
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Vercel deploy hook
+        run: curl -fsS -X POST "${{ secrets.SKBLOG_DEPLOY_HOOK }}"
