@@ -3,6 +3,7 @@ import Image from "next/image";
 type ProfileProps = {
   name?: string;
   description?: string;
+  contact?: string;
   avatarSrc?: string;
   avatarAlt?: string;
 };
@@ -10,6 +11,7 @@ type ProfileProps = {
 export default function Profile({
   name = "NeuroSaiKou",
   description = "Welcome to my personal website. I write about code, projects, and things I like.",
+  contact = "3065441861@qq.com",
   avatarSrc = "/avartor.jpg",
   avatarAlt = "Portrait of NeuroSaiKou",
 }: ProfileProps) {
@@ -42,7 +44,7 @@ export default function Profile({
           </div>
         </div>
         <p className="text-zinc-600 dark:text-zinc-400 items-top">
-          contact me: 3065441861@qq.com
+          Contact me: {contact}
         </p>
       </div>
     </section>
