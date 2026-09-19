@@ -33,7 +33,7 @@ export default function SongRow({
           {active ? "▶" : index + 1}
         </span>
 
-        <span className="relative size-12 shrink-0 overflow-hidden rounded-xl bg-zinc-100 dark:bg-zinc-900">
+        <span className="relative lightedge lightedge-2 lightedge-brightness-260 size-12 shrink-0 overflow-hidden rounded-xl bg-zinc-100 dark:bg-zinc-900">
           {song.cover ? (
             <Image
               src={song.cover}

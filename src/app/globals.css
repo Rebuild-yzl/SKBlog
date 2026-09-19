@@ -208,7 +208,8 @@
  * 注意别把它加到外层的 sticky 容器上 —— 那样绝对定位的折叠菜单会被一起裁掉。
  */
 @utility glass-bar {
-  @apply bg-zinc-50/70 backdrop-blur-sm dark:bg-black/60;
+  @apply bg-zinc-50/35 dark:bg-black/35;
+  backdrop-filter: blur(100px) brightness(1.2) saturate(2.5);
   overflow: clip;
 }
 

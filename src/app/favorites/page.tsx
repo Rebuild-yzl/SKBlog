@@ -19,7 +19,7 @@ export default function Favorites() {
     return (
       <NothingHere
         title="No favorites yet"
-        description="在笔记仓库里给一篇笔记加上 type: music，正文每行写一个网易云歌曲 ID，就会出现在这里。"
+        description="未收藏任何内容"
       />
     );
   }
@@ -31,7 +31,7 @@ export default function Favorites() {
           Favorites
         </h1>
         <p className="text-sm text-zinc-600 dark:text-zinc-400">
-          {`${playlists.length} 个歌单、共 ${total} 首 —— 点任意一行开始播放。`}
+          {`${playlists.length} 个歌单、共 ${total} 首 —— 点击开始播放`}
         </p>
       </header>
 

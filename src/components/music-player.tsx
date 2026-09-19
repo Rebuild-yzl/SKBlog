@@ -210,7 +210,19 @@ export default function MusicProvider({
       />
 
       {visible ? (
-        <div className="fixed inset-x-0 bottom-0 z-40 p-3 sm:p-4">
+        <div className="fixed overflow-clip inset-x-0 bottom-0 z-40 p-3 sm:p-4">
+          <div className="absolute overflow-hidden m-3 size-12 shrink-0 rounded-xl bg-zinc-100 dark:bg-zinc-900">
+            {currentSong?.cover ? (
+              <Image
+                src={currentSong.cover}
+                alt=""
+                width={96}
+                height={96}
+                unoptimized
+                className="size-full object-cover"
+              />
+            ) : null}
+          </div>
           <div className="glass-bar lightedge lightedge-solid mx-auto flex w-full max-w-5xl items-center gap-3 rounded-3xl p-3">
             <div className="relative size-12 shrink-0 overflow-hidden rounded-xl bg-zinc-100 dark:bg-zinc-900">
               {currentSong?.cover ? (
@@ -248,7 +260,8 @@ export default function MusicProvider({
                 onClick={() => {
                   const audio = audioRef.current;
                   if (!audio) return;
-                  if (audio.paused) void audio.play().catch(() => setFailed(true));
+                  if (audio.paused)
+                    void audio.play().catch(() => setFailed(true));
                   else audio.pause();
                 }}
                 aria-label={playing ? "暂停" : "播放"}
@@ -273,7 +286,10 @@ export default function MusicProvider({
                 min={0}
                 max={Number.isFinite(duration) ? duration : 0}
                 step={1}
-                value={Math.min(progress, Number.isFinite(duration) ? duration : 0)}
+                value={Math.min(
+                  progress,
+                  Number.isFinite(duration) ? duration : 0,
+                )}
                 onChange={(event) => {
                   const audio = audioRef.current;
                   if (!audio) return;
