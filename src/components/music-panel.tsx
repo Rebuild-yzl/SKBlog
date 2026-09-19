@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import LightedgeBlurCard from "@/components/lightedge-blur-card";
+import MusicCard from "@/components/music-card";
 import { PlayerIcon, formatTime, useMusicPlayer } from "@/components/music-player";
 
 /*
@@ -43,7 +43,8 @@ export default function MusicPanel({ className = "" }: { className?: string }) {
   const failedNow = isCurrent && failed;
 
   return (
-    <LightedgeBlurCard
+    <MusicCard
+      cover={song.cover}
       wrapperClassName={className}
       /*
        * 窄屏与 lg（面板被挤在窄栏里）：上下堆叠。
@@ -147,6 +148,6 @@ export default function MusicPanel({ className = "" }: { className?: string }) {
           className="h-1 w-full accent-zinc-900 dark:accent-zinc-100"
         />
       </div>
-    </LightedgeBlurCard>
+    </MusicCard>
   );
 }

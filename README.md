@@ -101,6 +101,7 @@ src/
    ├─ profile-details.tsx    # 名片下方的补充信息：在校状态 / 地点 / 邮箱 / 工具图标（无卡片边框）
    ├─ music-player.tsx       # 站内播放器（客户端组件，挂在根布局，切页不中断）
    ├─ music-panel.tsx        # 音乐页的大播放器（与迷你条共用同一份播放状态）
+   ├─ music-card.tsx         # 音乐卡片：普通卡片 + 一层封面副本背板（做模糊染色底）
    ├─ song-row.tsx           # 收藏页的单曲行（点整行播放）
    └─ lightedge-blur-card.tsx # 毛玻璃卡片：blur-card + 平级的假 border（采样卡片背后的页面）
 

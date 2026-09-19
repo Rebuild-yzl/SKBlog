@@ -9,6 +9,11 @@ type LightedgeBlurCardProps = {
   radiusClassName?: string;
   /** 调假 border 用的类名（例如 lightedge-2 加粗、-lightedge-inset-1 让它完全落在卡片外侧） */
   borderClassName?: string;
+  /**
+   * 背板：渲染在外壳里、假 border 与卡片**之前**（也就是卡片下面），自动铺满整卡并裁到圆角。
+   * 卡片自己的 backdrop-filter 会把它糊成一层带色底——音乐卡片就靠它做"封面模糊背板"。
+   */
+  backdrop?: ReactNode;
   children: ReactNode;
 };
 
@@ -34,10 +39,19 @@ export default function LightedgeBlurCard({
   wrapperClassName = "",
   radiusClassName = "rounded-xl",
   borderClassName = "",
+  backdrop,
   children,
 }: LightedgeBlurCardProps) {
   return (
     <div className={`relative ${wrapperClassName}`}>
+      {backdrop ? (
+        <div
+          aria-hidden
+          className={`pointer-events-none absolute inset-0 overflow-hidden ${radiusClassName}`}
+        >
+          {backdrop}
+        </div>
+      ) : null}
       <div
         aria-hidden
         className={`lightedge lightedge-4 pointer-events-none absolute -inset-0.5 ${radiusClassName} ${borderClassName}`}
