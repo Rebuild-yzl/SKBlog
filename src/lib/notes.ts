@@ -102,6 +102,8 @@ function isPublished(value: unknown): boolean {
 function readPost(file: string, root: string): Post | undefined {
   const raw = fs.readFileSync(file, "utf8");
   const { data, content } = matter(raw);
+  // 音乐收藏笔记（type: music）由 src/lib/music.ts 处理，不该同时变成一篇博客
+  if (data.type === "music") return undefined;
   if (!isPublished(data.publish)) return undefined;
 
   const relative = path.relative(root, file).split(path.sep).join("/");

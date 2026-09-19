@@ -31,6 +31,7 @@ NeuroSaiKou 的个人网站 —— 用来放博客、作品、项目与收藏的
 | 内容来源 | 独立的**笔记仓库**（Obsidian vault 的 Git 仓库），构建时用 `git` 浅克隆同步，详见 [docs/notes-sync.md](./docs/notes-sync.md) |
 | 内容解析 | [gray-matter](https://github.com/jonschlinkert/gray-matter)（读取笔记 frontmatter；正文当前只做纯文本展示） |
 | 图标 | [skillicons.dev](https://skillicons.dev) 的图标在构建时抓取并自托管到 `public/`（访客不访问第三方 CDN） |
+| 音乐 | 只存网易云歌曲 ID（写在笔记仓库里），元信息构建期抓取缓存；播放时浏览器直接向解析接口取地址并 302 到网易云 CDN —— 音频不经过 Vercel |
 | 字体 / 图片 | `next/font/google`（Geist / Geist Mono）、`next/image`（SVG 用 `unoptimized`） |
 | 代码检查 | ESLint 9 + `eslint-config-next` |
 | 编译优化 | React Compiler（`next.config.ts` 中 `reactCompiler: true`） |
@@ -56,6 +57,9 @@ npm run dev
 | 命令 | 说明 |
 | --- | --- |
 | `npm run notes:sync` | 把笔记仓库同步到 `.notes/`（`dev` / `build` 通过 npm 的 pre 钩子自动调用，一般不用手动执行） |
+| `npm run icons:fetch` | 抓取工具图标到 `public/icons/toolchain/`（同上，由 pre 钩子调用） |
+| `npm run music:meta` | 抓取音乐收藏的歌名/歌手/封面到 `.cache/music-meta.json`（同上） |
+| `npm run sync` | 上面三步串起来（`predev` / `prebuild` 调用的就是它） |
 | `npm run dev` | 启动开发服务器（默认使用 Turbopack，React Compiler 生效） |
 | `npm run build` | 生产环境构建 |
 | `npm start` | 运行生产构建产物 |
@@ -82,6 +86,8 @@ src/
 │  └─ works/page.tsx         # 作品
 ├─ lib/
 │  ├─ notes.ts               # 笔记读取层：遍历 .notes/、按 frontmatter 过滤、组装出 Post
+│  ├─ music.ts               # 音乐数据层：歌单 + 单曲，合并构建期抓到的元信息
+│  ├─ music-notes.mjs        # 音乐笔记的扫描规则（目录=歌单、正文每行一个 ID），页面与脚本共用
 │  └─ tool-icons.json        # 工具图标清单（slug + 名称），组件与抓取脚本共用
 └─ components/
    ├─ navbar.tsx             # 顶部导航（客户端组件：sticky 胶囊 + 半透明模糊，<768px 折叠为汉堡菜单，z-50）
@@ -90,11 +96,14 @@ src/
    ├─ nothing-here.tsx       # 空态占位（图标 + 两句文案，不套卡片）
    ├─ banner.tsx             # 横幅卡片：圆角边框，按 16:9 完整展示图片（不裁切），文字用 glass-panel 方块
    ├─ profile.tsx            # 个人名片（头像 + 名称 + 描述）
-   └─ profile-details.tsx    # 名片下方的补充信息：在校状态 / 地点 / 邮箱 / 工具图标（无卡片边框）
+   ├─ profile-details.tsx    # 名片下方的补充信息：在校状态 / 地点 / 邮箱 / 工具图标（无卡片边框）
+   ├─ music-player.tsx       # 站内播放器（客户端组件，挂在根布局，切页不中断）
+   └─ song-row.tsx           # 收藏页的单曲行（点整行播放）
 
 scripts/
 ├─ sync-notes.mjs            # 构建/开发前把笔记仓库同步到 .notes/（本地目录或 Git 两种来源）
-└─ fetch-tool-icons.mjs      # 构建/开发前把工具图标抓到 public/icons/toolchain/（自托管，用户端不访问 CDN）
+├─ fetch-tool-icons.mjs      # 构建/开发前把工具图标抓到 public/icons/toolchain/（自托管，用户端不访问 CDN）
+└─ fetch-music-meta.mjs      # 构建/开发前把音乐元信息抓到 .cache/（抓不到只警告，不阻断构建）
 
 cicd/                        # 给「笔记仓库」用的 CI 示例（本站点自己用不到）
 ├─ github/workflows/notify-blog.yml
@@ -116,7 +125,7 @@ docs/                        # 详细文档（见文末[文档](#文档)一节�
 - [x] `/about` — About：横幅卡片 + 个人名片卡片
 - [ ] `/analytics` — Analytics：仅挂载 Vercel Analytics
 - [x] `/blogs` — Blogs：列表 + 详情（`/blogs/[slug]`），内容来自笔记仓库（见下节）；仓库里没有 `publish: true` 的笔记时仍是空态占位
-- [ ] `/favorites` — Favorites：空态占位（`NothingHere`）
+- [x] `/favorites` — Favorites：按目录分组的单曲列表，点任意一行在站内播放（见 [docs/notes-sync.md](./docs/notes-sync.md#音乐收藏type-music)）
 - [ ] `/participate` — Participate：空态占位（`NothingHere`）
 - [ ] `/projects` — Projects：空态占位（`NothingHere`）
 - [ ] `/works` — Works：空态占位（`NothingHere`）

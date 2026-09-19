@@ -5,9 +5,11 @@
   "scripts": {
     "notes:sync": "node scripts/sync-notes.mjs",
     "icons:fetch": "node scripts/fetch-tool-icons.mjs",
-    "predev": "npm run notes:sync && npm run icons:fetch",
+    "music:meta": "node scripts/fetch-music-meta.mjs",
+    "sync": "npm run notes:sync && npm run icons:fetch && npm run music:meta",
+    "predev": "npm run sync",
     "dev": "next dev",
-    "prebuild": "npm run notes:sync && npm run icons:fetch",
+    "prebuild": "npm run sync",
     "build": "next build",
     "vercel-build": "npm run build",
     "start": "next start",

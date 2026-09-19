@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import MusicProvider from "@/components/music-player";
 import NavBar from "@/components/navbar";
+import { getPlaylists, musicApiBase } from "@/lib/music";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -23,6 +25,9 @@ export const metadata: Metadata = {
 const themeScript = `try{var t=localStorage.getItem("theme");if(t==="dark"||(t!=="light"&&matchMedia("(prefers-color-scheme: dark)").matches))document.documentElement.classList.add("dark")}catch(e){}`;
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
+  // 歌曲清单在构建期定死（来自笔记仓库），播放器挂在根布局，切页不打断播放
+  const playlists = getPlaylists();
+
   return (
     <html
       lang="en"
@@ -34,7 +39,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       </head>
       <body className="min-h-full flex flex-col">
         <NavBar />
-        {children}
+        <MusicProvider playlists={playlists} apiBase={musicApiBase()}>
+          {children}
+        </MusicProvider>
       </body>
     </html>
   );
