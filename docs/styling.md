@@ -102,6 +102,8 @@
 
 环的粗细与位置继续用现成的 `lightedge-*` 工具类调，通过 `borderClassName` 传进来（例如 `lightedge-2`、`-lightedge-inset-1` 让整条环完全落在卡片外侧）。
 
+`LightedgeBlurCard` 还有一个可选的 **`backdrop` 插槽**：传给它的内容同样渲染在外壳里、位于假 border 与卡片**之前**（也就是卡片下面），会自动铺满整卡、裁到圆角、`pointer-events: none` + `aria-hidden`。卡片的 `backdrop-filter` 会把它糊成一层带色底 —— `music-card.tsx` 就是靠这个插槽塞了一张放大的封面副本，做出"封面模糊背板"；要是把副本直接塞进卡片内部，反而会被卡片的 backdrop root 挡住、采样不到。
+
 `overflow: clip` 是防溢出的保险：万一里层内容有几像素溢出（文案变长、断点临界值等），就地裁掉，而不是漏到外面把整页撑出横向滚动条（实测往胶囊里塞 2000px 宽的元素，页面 `scrollWidth` 仍等于视口宽）。用 `clip` 而不是 `hidden`，是为了不把它变成可滚动容器；另外**不要**把它加到外层那个只负责 `sticky` 的容器上，否则绝对定位的折叠菜单会被一起裁掉。
 
 > **注意 `backdrop-filter` 的 backdrop root 行为**：带 `backdrop-filter` 的元素会成为其子元素的「backdrop root」，导致子元素上的 `backdrop-blur` 只能采到该元素自身的内容，看起来就像模糊没生效。所以折叠菜单必须与胶囊本体**平级**（都放在那个只负责 `sticky` + `m-4` 的 `<nav>` 里），不能嵌在带模糊的胶囊内部。

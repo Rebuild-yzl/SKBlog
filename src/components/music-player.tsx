@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 import {
   createContext,
   useCallback,
@@ -29,8 +30,22 @@ const STORAGE_VOLUME = "music:volume";
 const STORAGE_LAST = "music:last";
 
 type MusicContextValue = {
-  play: (playlistId: string, songId: string) => void;
+  playlists: Playlist[];
   currentSongId: string | null;
+  currentSong: Song | null;
+  currentPlaylistId: string | null;
+  playing: boolean;
+  progress: number;
+  duration: number;
+  volume: number;
+  failed: boolean;
+  play: (playlistId: string, songId: string) => void;
+  toggle: () => void;
+  next: () => void;
+  prev: () => void;
+  seek: (seconds: number) => void;
+  setVolume: (value: number) => void;
+  close: () => void;
 };
 
 const MusicContext = createContext<MusicContextValue | null>(null);
@@ -39,6 +54,24 @@ export function useMusicPlayer(): MusicContextValue {
   const value = useContext(MusicContext);
   if (!value) throw new Error("useMusicPlayer 必须在 <MusicProvider> 里使用");
   return value;
+}
+
+/**
+ * 音乐页「当前该显示哪首」的统一规则：正在播放/选中的那首 → 上次听的那首（provider
+ * 已从 localStorage 恢复）→ 第一个歌单的第一首。大播放器与整屏背景都用它，
+ * 免得两处规则各写一份、改一处忘一处。
+ */
+export function useNowPlaying() {
+  const { playlists, currentSongId, currentSong, currentPlaylistId } =
+    useMusicPlayer();
+  const song = currentSong ?? playlists[0]?.songs[0] ?? null;
+  const playlistId = currentPlaylistId ?? playlists[0]?.id ?? "";
+  return {
+    song,
+    playlistId,
+    /** 只有"这首歌就是当前选中的那首"时，进度/时长/失败状态才属于它 */
+    isCurrent: song !== null && currentSongId === song.id,
+  };
 }
 
 export default function MusicProvider({
@@ -97,6 +130,32 @@ export default function MusicProvider({
     },
     [current, playlists, play],
   );
+
+  /* 供迷你条与大播放器共用的动作 */
+  const prev = useCallback(() => step(-1), [step]);
+  const next = useCallback(() => step(1), [step]);
+
+  const toggle = useCallback(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    if (audio.paused) void audio.play().catch(() => setFailed(true));
+    else audio.pause();
+  }, []);
+
+  const seek = useCallback((seconds: number) => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    audio.currentTime = seconds;
+    setProgress(seconds);
+  }, []);
+
+  const close = useCallback(() => {
+    audioRef.current?.pause();
+    wantsPlayRef.current = false;
+    setCurrent(null);
+    setPlaying(false);
+    setFailed(false);
+  }, []);
 
   /* 换歌 / 重试：设置 src，必要时开始播放 */
   useEffect(() => {
@@ -182,11 +241,46 @@ export default function MusicProvider({
   }, [step]);
 
   const contextValue = useMemo<MusicContextValue>(
-    () => ({ play, currentSongId: current?.songId ?? null }),
-    [play, current],
+    () => ({
+      playlists,
+      currentSongId: current?.songId ?? null,
+      currentSong: currentSong ?? null,
+      currentPlaylistId: current?.playlistId ?? null,
+      playing,
+      progress,
+      duration,
+      volume,
+      failed,
+      play,
+      toggle,
+      next,
+      prev,
+      seek,
+      setVolume,
+      close,
+    }),
+    [
+      playlists,
+      current,
+      currentSong,
+      playing,
+      progress,
+      duration,
+      volume,
+      failed,
+      play,
+      toggle,
+      next,
+      prev,
+      seek,
+      close,
+    ],
   );
 
-  const visible = current !== null;
+  const pathname = usePathname();
+  /* 音乐页有它自己的大播放器，那边不显示迷你条（也不留底部空白） */
+  const onMusicPage = pathname.startsWith("/favorites/music");
+  const visible = current !== null && !onMusicPage;
 
   return (
     <MusicContext.Provider value={contextValue}>
@@ -255,7 +349,7 @@ export default function MusicProvider({
               <div className="ml-auto flex items-center gap-1">
                 <button
                   type="button"
-                  onClick={() => step(-1)}
+                  onClick={prev}
                   aria-label="上一首"
                   className="rounded-full p-2 hover:bg-black/5 dark:hover:bg-white/10"
                 >
@@ -263,13 +357,7 @@ export default function MusicProvider({
                 </button>
                 <button
                   type="button"
-                  onClick={() => {
-                    const audio = audioRef.current;
-                    if (!audio) return;
-                    if (audio.paused)
-                      void audio.play().catch(() => setFailed(true));
-                    else audio.pause();
-                  }}
+                  onClick={toggle}
                   aria-label={playing ? "暂停" : "播放"}
                   className="rounded-full p-2 hover:bg-black/5 dark:hover:bg-white/10"
                 >
@@ -277,7 +365,7 @@ export default function MusicProvider({
                 </button>
                 <button
                   type="button"
-                  onClick={() => step(1)}
+                  onClick={next}
                   aria-label="下一首"
                   className="rounded-full p-2 hover:bg-black/5 dark:hover:bg-white/10"
                 >
@@ -296,12 +384,7 @@ export default function MusicProvider({
                     progress,
                     Number.isFinite(duration) ? duration : 0,
                   )}
-                  onChange={(event) => {
-                    const audio = audioRef.current;
-                    if (!audio) return;
-                    audio.currentTime = Number(event.target.value);
-                    setProgress(Number(event.target.value));
-                  }}
+                  onChange={(event) => seek(Number(event.target.value))}
                   aria-label="播放进度"
                   className="h-1 w-full max-w-xs accent-zinc-900 dark:accent-zinc-100"
                 />
@@ -333,13 +416,7 @@ export default function MusicProvider({
 
               <button
                 type="button"
-                onClick={() => {
-                  audioRef.current?.pause();
-                  wantsPlayRef.current = false;
-                  setCurrent(null);
-                  setPlaying(false);
-                  setFailed(false);
-                }}
+                onClick={close}
                 aria-label="关闭播放器"
                 className="shrink-0 rounded-full p-2 hover:bg-black/5 dark:hover:bg-white/10"
               >
@@ -353,14 +430,20 @@ export default function MusicProvider({
   );
 }
 
-function formatTime(seconds: number) {
+export function formatTime(seconds: number) {
   if (!Number.isFinite(seconds) || seconds <= 0) return "0:00";
   const total = Math.floor(seconds);
   return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, "0")}`;
 }
 
-/* 播放器里用到的四个图标，画法与 nothing-here.tsx 一致（线框 + currentColor） */
-function PlayerIcon({ name }: { name: "prev" | "play" | "pause" | "next" | "close" }) {
+/* 播放器图标（迷你条与大播放器共用），画法与 nothing-here.tsx 一致（线框 + currentColor） */
+export function PlayerIcon({
+  name,
+  className = "size-4",
+}: {
+  name: "prev" | "play" | "pause" | "next" | "close" | "volume";
+  className?: string;
+}) {
   return (
     <svg
       viewBox="0 0 24 24"
@@ -369,7 +452,7 @@ function PlayerIcon({ name }: { name: "prev" | "play" | "pause" | "next" | "clos
       strokeWidth="1.5"
       strokeLinecap="round"
       strokeLinejoin="round"
-      className="size-4"
+      className={className}
       aria-hidden="true"
     >
       {name === "prev" ? <path d="M19 5v14L8 12zM5 5v14" /> : null}
@@ -377,6 +460,12 @@ function PlayerIcon({ name }: { name: "prev" | "play" | "pause" | "next" | "clos
       {name === "pause" ? <path d="M9 5v14M15 5v14" /> : null}
       {name === "next" ? <path d="M5 5v14l11-7zM19 5v14" /> : null}
       {name === "close" ? <path d="M6 6l12 12M18 6L6 18" /> : null}
+      {name === "volume" ? (
+        <>
+          <path d="M11 5 6.5 8.5H3v7h3.5L11 19z" />
+          <path d="M15.5 9.5a3.5 3.5 0 0 1 0 5" />
+        </>
+      ) : null}
     </svg>
   );
 }

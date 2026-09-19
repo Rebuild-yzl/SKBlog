@@ -69,7 +69,9 @@ function readMeta(): Meta {
 
 export function getPlaylists(): Playlist[] {
   const root = notesRoot();
-  if (!existsSync(root)) return [];
+  // 根目录来自环境变量，Turbopack 静态分析收敛不了，会退化成「追踪整个项目」；
+  // 这里按官方提示显式豁免（笔记只在构建期读取，不需要被追踪进部署产物）。
+  if (!existsSync(/* turbopackIgnore: true */ root)) return [];
 
   const meta = readMeta();
 

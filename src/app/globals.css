@@ -217,6 +217,27 @@
 }
 
 /*
+ * 音乐页整屏背景换歌时的淡入（见 components/music-backdrop.tsx）。
+ * 只做"新背景淡入"，不做双层交叉淡入；开了减弱动效偏好就完全不动画。
+ */
+@keyframes music-backdrop-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@utility music-backdrop-in {
+  animation: music-backdrop-in 600ms ease-out both;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+/*
  * 页面底色只由根元素负责：html 的背景会铺满整个画布（canvas），
  * 包括横向溢出出来的区域，所以内容容器不要再自己写 bg-*，
  * 否则一旦出现横向滚动，溢出区露出的是根背景，就会看到两套颜色的接缝。
