@@ -80,13 +80,15 @@ src/
 │  ├─ analytics/page.tsx     # 访问统计（Vercel Analytics）
 │  ├─ blogs/page.tsx         # 博客列表（笔记仓库里 publish: true 的笔记）
 │  ├─ blogs/[slug]/page.tsx  # 博客详情（构建期由 generateStaticParams 生成静态页）
-│  ├─ favorites/page.tsx     # 收藏
+│  ├─ favorites/page.tsx     # 收藏分类页（音乐收藏 / 图片收藏…）
+│  ├─ favorites/music/page.tsx # 音乐收藏：大播放器 + 曲目列表
 │  ├─ participate/page.tsx   # 参与
 │  ├─ projects/page.tsx      # 项目
 │  └─ works/page.tsx         # 作品
 ├─ lib/
 │  ├─ notes.ts               # 笔记读取层：遍历 .notes/、按 frontmatter 过滤、组装出 Post
 │  ├─ music.ts               # 音乐数据层：歌单 + 单曲，合并构建期抓到的元信息
+│  ├─ collections.ts         # 收藏分类清单（图标 / 标题 / 链接 / 敬请期待），加分类只加一行
 │  ├─ music-notes.mjs        # 音乐笔记的扫描规则（目录=歌单、正文每行一个 ID），页面与脚本共用
 │  └─ tool-icons.json        # 工具图标清单（slug + 名称），组件与抓取脚本共用
 └─ components/
@@ -98,6 +100,7 @@ src/
    ├─ profile.tsx            # 个人名片（头像 + 名称 + 描述）
    ├─ profile-details.tsx    # 名片下方的补充信息：在校状态 / 地点 / 邮箱 / 工具图标（无卡片边框）
    ├─ music-player.tsx       # 站内播放器（客户端组件，挂在根布局，切页不中断）
+   ├─ music-panel.tsx        # 音乐页的大播放器（与迷你条共用同一份播放状态）
    ├─ song-row.tsx           # 收藏页的单曲行（点整行播放）
    └─ lightedge-blur-card.tsx # 毛玻璃卡片：blur-card + 平级的假 border（采样卡片背后的页面）
 
@@ -126,7 +129,8 @@ docs/                        # 详细文档（见文末[文档](#文档)一节�
 - [x] `/about` — About：横幅卡片 + 个人名片卡片
 - [ ] `/analytics` — Analytics：仅挂载 Vercel Analytics
 - [x] `/blogs` — Blogs：列表 + 详情（`/blogs/[slug]`），内容来自笔记仓库（见下节）；仓库里没有 `publish: true` 的笔记时仍是空态占位
-- [x] `/favorites` — Favorites：按目录分组的单曲列表，点任意一行在站内播放（见 [docs/notes-sync.md](./docs/notes-sync.md#音乐收藏type-music)）
+- [x] `/favorites` — Favorites：收藏分类页（分类清单见 `src/lib/collections.ts`）
+- [x] `/favorites/music` — 音乐收藏：左侧大播放器 + 右侧按歌单分组的曲目列表，点任意一行在站内播放；本页隐藏迷你播放条（见 [docs/notes-sync.md](./docs/notes-sync.md#音乐收藏type-music)）
 - [ ] `/participate` — Participate：空态占位（`NothingHere`）
 - [ ] `/projects` — Projects：空态占位（`NothingHere`）
 - [ ] `/works` — Works：空态占位（`NothingHere`）
