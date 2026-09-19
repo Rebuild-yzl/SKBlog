@@ -27,7 +27,7 @@ NeuroSaiKou 的个人网站 —— 用来放博客、作品、项目与收藏的
 | UI 库 | React 19.2.8 |
 | 语言 | TypeScript 5（`strict`） |
 | 样式 | Tailwind CSS 4 + PostCSS（`@tailwindcss/postcss`） |
-| 设计系统 | Tailwind 4 的 `@theme` / `@utility`：`glass-panel`、`lightedge`（采样描边）、`glass-bar`，详见 [docs/styling.md](./docs/styling.md) |
+| 设计系统 | Tailwind 4 的 `@theme` / `@utility`：`glass-panel`、`lightedge`（采样描边）、`blur-card`，详见 [docs/styling.md](./docs/styling.md) |
 | 内容来源 | 独立的**笔记仓库**（Obsidian vault 的 Git 仓库），构建时用 `git` 浅克隆同步，详见 [docs/notes-sync.md](./docs/notes-sync.md) |
 | 内容解析 | [gray-matter](https://github.com/jonschlinkert/gray-matter)（读取笔记 frontmatter；正文当前只做纯文本展示） |
 | 图标 | [skillicons.dev](https://skillicons.dev) 的图标在构建时抓取并自托管到 `public/`（访客不访问第三方 CDN） |
@@ -98,7 +98,8 @@ src/
    ├─ profile.tsx            # 个人名片（头像 + 名称 + 描述）
    ├─ profile-details.tsx    # 名片下方的补充信息：在校状态 / 地点 / 邮箱 / 工具图标（无卡片边框）
    ├─ music-player.tsx       # 站内播放器（客户端组件，挂在根布局，切页不中断）
-   └─ song-row.tsx           # 收藏页的单曲行（点整行播放）
+   ├─ song-row.tsx           # 收藏页的单曲行（点整行播放）
+   └─ lightedge-blur-card.tsx # 毛玻璃卡片：blur-card + 平级的假 border（采样卡片背后的页面）
 
 scripts/
 ├─ sync-notes.mjs            # 构建/开发前把笔记仓库同步到 .notes/（本地目录或 Git 两种来源）
@@ -150,6 +151,6 @@ docs/                        # 详细文档（见文末[文档](#文档)一节�
 | [docs/notes-sync.md](./docs/notes-sync.md) | 博客内容怎么来的：发布规则、frontmatter 字段、环境变量、本地预览、对笔记仓库的要求 |
 | [docs/deployment.md](./docs/deployment.md) | 部署到 Vercel、push 笔记触发重新部署、部署前自检 |
 | [docs/development.md](./docs/development.md) | 开发约定：组件位置、样式与令牌、图片、新增页面 |
-| [docs/styling.md](./docs/styling.md) | `glass-panel` / `lightedge` / `glass-bar` 的实现与调参 |
+| [docs/styling.md](./docs/styling.md) | `glass-panel` / `lightedge` / `blur-card`（含 `LightedgeBlurCard`）的实现与调参 |
 | [docs/roadmap.md](./docs/roadmap.md) | 待办清单 |
 | [cicd/](./cicd) | 给**笔记仓库**用的 CI 示例（GitHub / GitLab / GitCode / Gitee） |

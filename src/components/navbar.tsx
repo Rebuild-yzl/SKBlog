@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import LightedgeBlurCard from "@/components/lightedge-blur-card";
 import ThemeToggle from "@/components/theme-toggle";
 
 const links = [
@@ -19,13 +20,13 @@ export default function NavBar() {
   const [open, setOpen] = useState(false);
 
   return (
-    // 外观统一来自 globals.css 的 glass-bar（描边 + 半透明底 + 背景模糊），边框颜色走 --border
+    // 外观统一来自 LightedgeBlurCard（blur-card 半透明底 + 背景模糊，外加平级的假 border）
     // z-50：页面里排在导航之后的定位元素会盖住吸顶导航，需要抬高导航层级
     // 外层只管吸顶与外边距：带 backdrop-filter 的元素会成为 backdrop root（模糊只能采到它自身的内容），
     // 所以折叠菜单必须与胶囊本体平级，不能嵌在胶囊内部
     <nav className="m-4 sticky top-4 z-50">
-      {/* 胶囊本体：圆角与内边距单独设置；lightedge 的环采样「被模糊后的内容」，两者叠出采样描边 */}
-      <div className="glass-bar lightedge lightedge-solid rounded-full p-4">
+      {/* 胶囊本体：圆角与内边距单独设置；毛玻璃与假 border 由组件负责（假 border 在卡片外面才采得到背景） */}
+      <LightedgeBlurCard radiusClassName="rounded-full" className="p-4">
         <div className="flex items-center justify-between gap-4">
           <p>NeuroSaiKou</p>
 
@@ -70,29 +71,31 @@ export default function NavBar() {
             </svg>
           </button>
         </div>
-      </div>
+      </LightedgeBlurCard>
 
-      {/* 折叠菜单：与胶囊本体平级，才能对页面内容做背景模糊；圆角与内边距单独设置 */}
+      {/* 折叠菜单：与胶囊本体平级，才能对页面内容做背景模糊；外层 div 只管定位与 aria-controls */}
       {open && (
-        <div
-          id="nav-menu"
-          className="glass-bar lightedge lightedge-solid absolute inset-x-0 top-full mt-2 flex flex-col gap-1 rounded-3xl p-2 md:hidden"
-        >
-          {links.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className="rounded-full px-3 py-2 hover:bg-black/5 dark:hover:bg-white/10"
-              onClick={() => setOpen(false)}
-            >
-              {link.label}
-            </Link>
-          ))}
+        <div id="nav-menu" className="absolute inset-x-0 top-full mt-2 md:hidden">
+          <LightedgeBlurCard
+            radiusClassName="rounded-3xl"
+            className="flex flex-col gap-1 p-2"
+          >
+            {links.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="rounded-full px-3 py-2 hover:bg-black/5 dark:hover:bg-white/10"
+                onClick={() => setOpen(false)}
+              >
+                {link.label}
+              </Link>
+            ))}
 
-          {/* 明暗切换：贴在菜单底部，分隔线颜色走全局 --border */}
-          <div className="mt-1 border-t pt-1">
-            <ThemeToggle />
-          </div>
+            {/* 明暗切换：贴在菜单底部，分隔线颜色走全局 --border */}
+            <div className="mt-1 border-t pt-1">
+              <ThemeToggle />
+            </div>
+          </LightedgeBlurCard>
         </div>
       )}
     </nav>
