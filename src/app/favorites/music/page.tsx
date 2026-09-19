@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import MusicPanel from "@/components/music-panel";
+import MusicBackdrop from "@/components/music-backdrop";
 import NothingHere from "@/components/nothing-here";
 import SongRow from "@/components/song-row";
 import { getPlaylists } from "@/lib/music";
@@ -27,7 +28,9 @@ export default function MusicFavorites() {
   }
 
   return (
-    <div className="flex flex-1 flex-col gap-6 p-6 font-sans lg:px-8">
+    /* isolate：让背景层的 -z-10 只在本页这一层生效（压在内容下、html 背景上） */
+    <div className="relative isolate flex flex-1 flex-col gap-6 p-6 font-sans lg:px-8">
+      <MusicBackdrop />
       <header className="flex flex-col gap-1">
         <Link
           href="/favorites"

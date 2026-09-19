@@ -56,6 +56,24 @@ export function useMusicPlayer(): MusicContextValue {
   return value;
 }
 
+/**
+ * 音乐页「当前该显示哪首」的统一规则：正在播放/选中的那首 → 上次听的那首（provider
+ * 已从 localStorage 恢复）→ 第一个歌单的第一首。大播放器与整屏背景都用它，
+ * 免得两处规则各写一份、改一处忘一处。
+ */
+export function useNowPlaying() {
+  const { playlists, currentSongId, currentSong, currentPlaylistId } =
+    useMusicPlayer();
+  const song = currentSong ?? playlists[0]?.songs[0] ?? null;
+  const playlistId = currentPlaylistId ?? playlists[0]?.id ?? "";
+  return {
+    song,
+    playlistId,
+    /** 只有"这首歌就是当前选中的那首"时，进度/时长/失败状态才属于它 */
+    isCurrent: song !== null && currentSongId === song.id,
+  };
+}
+
 export default function MusicProvider({
   playlists,
   apiBase,

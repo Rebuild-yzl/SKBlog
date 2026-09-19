@@ -2,7 +2,12 @@
 
 import Image from "next/image";
 import MusicCard from "@/components/music-card";
-import { PlayerIcon, formatTime, useMusicPlayer } from "@/components/music-player";
+import {
+  PlayerIcon,
+  formatTime,
+  useMusicPlayer,
+  useNowPlaying,
+} from "@/components/music-player";
 
 /*
  * 音乐页的大播放器：和迷你条共用同一份播放状态（见 music-player.tsx 的 provider），
@@ -14,9 +19,6 @@ import { PlayerIcon, formatTime, useMusicPlayer } from "@/components/music-playe
 export default function MusicPanel({ className = "" }: { className?: string }) {
   const {
     playlists,
-    currentSongId,
-    currentSong,
-    currentPlaylistId,
     playing,
     progress,
     duration,
@@ -30,14 +32,10 @@ export default function MusicPanel({ className = "" }: { className?: string }) {
     setVolume,
   } = useMusicPlayer();
 
-  const fallbackSong = playlists[0]?.songs[0];
-  const song = currentSong ?? fallbackSong;
+  const { song, playlistId, isCurrent } = useNowPlaying();
   if (!song) return null;
 
-  const playlistId = currentPlaylistId ?? playlists[0]?.id ?? "";
   const playlistName = playlists.find((item) => item.id === playlistId)?.name;
-  /* 只有"这首歌就是当前选中的那首"时，进度/时长/失败状态才属于它 */
-  const isCurrent = currentSongId === song.id;
   const total = isCurrent ? duration : 0;
   const elapsed = isCurrent ? progress : 0;
   const failedNow = isCurrent && failed;
