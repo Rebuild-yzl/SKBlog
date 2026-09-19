@@ -11,6 +11,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import LightedgeBlurCard from "@/components/lightedge-blur-card";
 import type { Playlist, Song } from "@/lib/music";
 
 /*
@@ -210,21 +211,9 @@ export default function MusicProvider({
       />
 
       {visible ? (
-        <div className="fixed overflow-clip inset-x-0 bottom-0 z-40 p-3 sm:p-4">
-          <div className="absolute overflow-hidden m-3 size-12 shrink-0 rounded-xl bg-zinc-100 dark:bg-zinc-900">
-            {currentSong?.cover ? (
-              <Image
-                src={currentSong.cover}
-                alt=""
-                width={96}
-                height={96}
-                unoptimized
-                className="size-full object-cover"
-              />
-            ) : null}
-          </div>
-          <div className="glass-bar lightedge lightedge-solid mx-auto flex w-full max-w-5xl items-center gap-3 rounded-3xl p-3">
-            <div className="relative size-12 shrink-0 overflow-hidden rounded-xl bg-zinc-100 dark:bg-zinc-900">
+        <div className="fixed inset-x-0 bottom-0 z-40 p-2 sm:p-4">
+          <div className="mx-auto w-full max-w-5xl">
+            <div className="absolute overflow-hidden m-3 size-12 shrink-0 rounded-xl bg-zinc-100 dark:bg-zinc-900">
               {currentSong?.cover ? (
                 <Image
                   src={currentSong.cover}
@@ -236,109 +225,127 @@ export default function MusicProvider({
                 />
               ) : null}
             </div>
+            <LightedgeBlurCard
+              wrapperClassName="mx-auto w-full max-w-5xl"
+              // radiusClassName="rounded-xl"
+              className="flex items-center gap-3 p-3"
+            >
+              <div className="relative size-12 shrink-0 overflow-hidden rounded-xl bg-zinc-100 dark:bg-zinc-900">
+                {currentSong?.cover ? (
+                  <Image
+                    src={currentSong.cover}
+                    alt=""
+                    width={96}
+                    height={96}
+                    unoptimized
+                    className="size-full object-cover"
+                  />
+                ) : null}
+              </div>
 
-            <div className="flex min-w-0 flex-col gap-0.5">
-              <p className="truncate text-sm font-medium">
-                {currentSong?.title ?? `网易云 ${current?.songId ?? ""}`}
-              </p>
-              <p className="truncate text-xs text-zinc-500 dark:text-zinc-400">
-                {failed ? "这条临时地址失效了" : (currentSong?.artist ?? "")}
-              </p>
-            </div>
+              <div className="flex min-w-0 flex-col gap-0.5">
+                <p className="truncate text-sm font-medium">
+                  {currentSong?.title ?? `网易云 ${current?.songId ?? ""}`}
+                </p>
+                <p className="truncate text-xs text-zinc-500 dark:text-zinc-400">
+                  {failed ? "这条临时地址失效了" : (currentSong?.artist ?? "")}
+                </p>
+              </div>
 
-            <div className="ml-auto flex items-center gap-1">
-              <button
-                type="button"
-                onClick={() => step(-1)}
-                aria-label="上一首"
-                className="rounded-full p-2 hover:bg-black/5 dark:hover:bg-white/10"
-              >
-                <PlayerIcon name="prev" />
-              </button>
+              <div className="ml-auto flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => step(-1)}
+                  aria-label="上一首"
+                  className="rounded-full p-2 hover:bg-black/5 dark:hover:bg-white/10"
+                >
+                  <PlayerIcon name="prev" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const audio = audioRef.current;
+                    if (!audio) return;
+                    if (audio.paused)
+                      void audio.play().catch(() => setFailed(true));
+                    else audio.pause();
+                  }}
+                  aria-label={playing ? "暂停" : "播放"}
+                  className="rounded-full p-2 hover:bg-black/5 dark:hover:bg-white/10"
+                >
+                  <PlayerIcon name={playing ? "pause" : "play"} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => step(1)}
+                  aria-label="下一首"
+                  className="rounded-full p-2 hover:bg-black/5 dark:hover:bg-white/10"
+                >
+                  <PlayerIcon name="next" />
+                </button>
+              </div>
+
+              {/* 进度与音量：range 控件天生支持键盘操作 */}
+              <div className="hidden flex-1 items-center gap-2 sm:flex">
+                <input
+                  type="range"
+                  min={0}
+                  max={Number.isFinite(duration) ? duration : 0}
+                  step={1}
+                  value={Math.min(
+                    progress,
+                    Number.isFinite(duration) ? duration : 0,
+                  )}
+                  onChange={(event) => {
+                    const audio = audioRef.current;
+                    if (!audio) return;
+                    audio.currentTime = Number(event.target.value);
+                    setProgress(Number(event.target.value));
+                  }}
+                  aria-label="播放进度"
+                  className="h-1 w-full max-w-xs accent-zinc-900 dark:accent-zinc-100"
+                />
+                <span className="w-16 shrink-0 font-mono text-xs text-zinc-500">
+                  {formatTime(progress)}/{formatTime(duration)}
+                </span>
+                <input
+                  type="range"
+                  min={0}
+                  max={1}
+                  step={0.01}
+                  value={volume}
+                  onChange={(event) => setVolume(Number(event.target.value))}
+                  aria-label="音量"
+                  className="h-1 w-20 accent-zinc-900 dark:accent-zinc-100"
+                />
+              </div>
+
+              {failed ? (
+                <a
+                  href={`https://music.163.com/#/song?id=${current?.songId ?? ""}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="shrink-0 text-xs underline"
+                >
+                  去平台听
+                </a>
+              ) : null}
+
               <button
                 type="button"
                 onClick={() => {
-                  const audio = audioRef.current;
-                  if (!audio) return;
-                  if (audio.paused)
-                    void audio.play().catch(() => setFailed(true));
-                  else audio.pause();
+                  audioRef.current?.pause();
+                  wantsPlayRef.current = false;
+                  setCurrent(null);
+                  setPlaying(false);
+                  setFailed(false);
                 }}
-                aria-label={playing ? "暂停" : "播放"}
-                className="rounded-full p-2 hover:bg-black/5 dark:hover:bg-white/10"
+                aria-label="关闭播放器"
+                className="shrink-0 rounded-full p-2 hover:bg-black/5 dark:hover:bg-white/10"
               >
-                <PlayerIcon name={playing ? "pause" : "play"} />
+                <PlayerIcon name="close" />
               </button>
-              <button
-                type="button"
-                onClick={() => step(1)}
-                aria-label="下一首"
-                className="rounded-full p-2 hover:bg-black/5 dark:hover:bg-white/10"
-              >
-                <PlayerIcon name="next" />
-              </button>
-            </div>
-
-            {/* 进度与音量：range 控件天生支持键盘操作 */}
-            <div className="hidden flex-1 items-center gap-2 sm:flex">
-              <input
-                type="range"
-                min={0}
-                max={Number.isFinite(duration) ? duration : 0}
-                step={1}
-                value={Math.min(
-                  progress,
-                  Number.isFinite(duration) ? duration : 0,
-                )}
-                onChange={(event) => {
-                  const audio = audioRef.current;
-                  if (!audio) return;
-                  audio.currentTime = Number(event.target.value);
-                  setProgress(Number(event.target.value));
-                }}
-                aria-label="播放进度"
-                className="h-1 w-full max-w-xs accent-zinc-900 dark:accent-zinc-100"
-              />
-              <span className="w-16 shrink-0 font-mono text-xs text-zinc-500">
-                {formatTime(progress)}/{formatTime(duration)}
-              </span>
-              <input
-                type="range"
-                min={0}
-                max={1}
-                step={0.01}
-                value={volume}
-                onChange={(event) => setVolume(Number(event.target.value))}
-                aria-label="音量"
-                className="h-1 w-20 accent-zinc-900 dark:accent-zinc-100"
-              />
-            </div>
-
-            {failed ? (
-              <a
-                href={`https://music.163.com/#/song?id=${current?.songId ?? ""}`}
-                target="_blank"
-                rel="noreferrer"
-                className="shrink-0 text-xs underline"
-              >
-                去平台听
-              </a>
-            ) : null}
-
-            <button
-              type="button"
-              onClick={() => {
-                audioRef.current?.pause();
-                wantsPlayRef.current = false;
-                setCurrent(null);
-                setPlaying(false);
-                setFailed(false);
-              }}
-              aria-label="关闭播放器"
-              className="shrink-0 rounded-full p-2 hover:bg-black/5 dark:hover:bg-white/10"
-            >
-              <PlayerIcon name="close" />
-            </button>
+            </LightedgeBlurCard>
           </div>
         </div>
       ) : null}

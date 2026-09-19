@@ -1,4 +1,4 @@
-# 毛玻璃样式（glass-panel / glass-bar）
+# 毛玻璃样式（glass-panel / blur-card / LightedgeBlurCard）
 
 定义在 `src/app/globals.css`，用 Tailwind 4 的 `@utility` 注册，写在一起是为了以后只改一处就能全局生效。
 
@@ -37,7 +37,8 @@
 
 // 纯色背景上的卡片/导航：加 lightedge-solid 让环有一条稳定的描边；想改这一处的粗细就加 lightedge-<数字>
 <section className="lightedge lightedge-2 lightedge-solid rounded-3xl bg-white …">
-<div className="glass-bar lightedge lightedge-solid rounded-full p-4 …">
+// 毛玻璃卡片：用组件，别自己把 lightedge 挂在 blur-card 上（原因见下文）
+<LightedgeBlurCard radiusClassName="rounded-full" className="p-4 …">
 ```
 
 **想调环的样子，只改令牌**（环本身不写死值）：
@@ -76,10 +77,31 @@
 
 > 这也解释了为什么早先那条「偶发给出的边缘亮线」挺好看：它不是 CSS 画的，而是 `backdrop-filter` 在合成边缘时留下的 1px 伪影，恰好也是「跟着背景亮度走」。现在的实现把这个效果变成了确定可复现的样式。
 
-## `glass-bar`（导航栏与折叠菜单）
+## `blur-card` 与 `LightedgeBlurCard`（毛玻璃卡片）
 
-导航栏胶囊和它的折叠菜单共用同一个工具类 `glass-bar`：`bg-zinc-50/70 dark:bg-black/60` + `backdrop-blur-sm` + `overflow: clip`（描边由 `lightedge lightedge-solid` 提供，就写在同一元素上）。圆角与内边距不抽离，由各自元素设置 —— 胶囊是 `rounded-full p-4`，菜单是 `rounded-3xl p-2`。
+`blur-card` 是毛玻璃卡片本体的工具类：半透明底 + `backdrop-filter` + `overflow: clip`，圆角、内边距、尺寸都由使用处设置。它**只管模糊，不管描边**。
 
-`overflow: clip` 是防溢出的保险：万一里层内容有几像素溢出（文案变长、断点临界值等），就地裁掉，而不是漏到外面把整页撑出横向滚动条（实测往胶囊里塞 2000px 宽的元素，页面 `scrollWidth` 仍等于视口宽）。用 `clip` 而不是 `hidden`，是为了不把胶囊变成可滚动容器；另外**不要**把它加到外层那个只负责 `sticky` 的容器上，否则绝对定位的折叠菜单会被一起裁掉。
+要带描边的毛玻璃卡片（导航栏胶囊与折叠菜单、播放条）统一用 `LightedgeBlurCard`：
+
+```tsx
+<LightedgeBlurCard radiusClassName="rounded-full" className="p-4" wrapperClassName="sticky top-4">
+  …
+</LightedgeBlurCard>
+```
+
+它渲染出来的结构是「外壳 + 假 border + 卡片」，假 border 与卡片**平级**、并且画在卡片**下面**：
+
+```
+<div class="relative">            只负责定位
+  <div class="lightedge …">       假 border（先画 → 在卡片下面，采样到的是卡片背后的页面）
+  <div class="blur-card …">…</div> 卡片本体
+</div>
+```
+
+**为什么不能把描边直接挂在 `blur-card` 上**：`backdrop-filter` 会创建「backdrop root」，它内部的一切（包括自己的伪元素）只能采样到「自己那层已经模糊过的合成结果」，边缘提亮就失效了 —— 和文档开头那条实测（126 vs 140）是同一个原因。搬到卡片外面之后，假 border 采样到的是页面，再压上 `--lightedge-line` 的色调，才是一条跟着背景走的模拟描边。画在下面而不是上面，是为了让它的采样范围里不含卡片本身。
+
+环的粗细与位置继续用现成的 `lightedge-*` 工具类调，通过 `borderClassName` 传进来（例如 `lightedge-2`、`-lightedge-inset-1` 让整条环完全落在卡片外侧）。
+
+`overflow: clip` 是防溢出的保险：万一里层内容有几像素溢出（文案变长、断点临界值等），就地裁掉，而不是漏到外面把整页撑出横向滚动条（实测往胶囊里塞 2000px 宽的元素，页面 `scrollWidth` 仍等于视口宽）。用 `clip` 而不是 `hidden`，是为了不把它变成可滚动容器；另外**不要**把它加到外层那个只负责 `sticky` 的容器上，否则绝对定位的折叠菜单会被一起裁掉。
 
 > **注意 `backdrop-filter` 的 backdrop root 行为**：带 `backdrop-filter` 的元素会成为其子元素的「backdrop root」，导致子元素上的 `backdrop-blur` 只能采到该元素自身的内容，看起来就像模糊没生效。所以折叠菜单必须与胶囊本体**平级**（都放在那个只负责 `sticky` + `m-4` 的 `<nav>` 里），不能嵌在带模糊的胶囊内部。
