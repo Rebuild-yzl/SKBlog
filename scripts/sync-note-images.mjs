@@ -4,8 +4,8 @@
  * .cache/note-images.json。
  *
  * 清单的键是**原始引用字符串**（例如 ![[6a04821c315e5.jpg]]），值里是已经解析好的站内绝对
- * 地址与宽高；找不到的引用写成 { missing: true, ref, note }，由图片控件渲染「未找到」提示。
- * 页面层因此完全不需要再做相对路径推断。
+ * 地址、宽高、字节数、格式与 EXIF；找不到的引用写成 { missing: true, ref, note }，由图片控件
+ * 渲染「未找到」提示。页面层因此完全不需要再做相对路径推断，也不用在运行时读原图。
  *
  * 环境变量：
  *   SKBLOG_NOTES_ATTACHMENTS  附件目录，相对笔记仓库根，默认「附件」
@@ -19,11 +19,13 @@ import {
   readdirSync,
   readFileSync,
   rmSync,
+  statSync,
   writeFileSync,
 } from "node:fs";
 import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
+import exifr from "exifr";
 import {
   isExternalTarget,
   parseImageRefs,
@@ -65,7 +67,68 @@ function walkMarkdown(dir, found = []) {
   return found;
 }
 
-function main() {
+/*
+ * exifr 的返回值里可能有二进制（缩略图、MakerNote）和超长字符串，直接写进清单会既大又没用。
+ * 这里只留下能直接显示成一行文字的标量（Date 转 ISO 字符串），空分组整组丢掉。
+ */
+function cleanExif(groups) {
+  if (!groups || typeof groups !== "object") return undefined;
+
+  const cleaned = {};
+  for (const [group, tags] of Object.entries(groups)) {
+    if (!tags || typeof tags !== "object") continue;
+
+    const kept = {};
+    for (const [key, value] of Object.entries(tags)) {
+      if (value === null || value === undefined) continue;
+      if (ArrayBuffer.isView(value)) continue;
+      if (typeof value === "object" && !Array.isArray(value) && !(value instanceof Date)) continue;
+      if (typeof value === "string" && value.length > 200) continue;
+      kept[key] = value instanceof Date ? value.toISOString() : value;
+    }
+
+    if (Object.keys(kept).length > 0) cleaned[group] = kept;
+  }
+
+  return Object.keys(cleaned).length > 0 ? cleaned : undefined;
+}
+
+/**
+ * 一张图的构建期信息：宽高、字节数、格式与 EXIF。
+ * EXIF 读不出来（PNG 截图、没有 EXIF 的图、格式不认识）只留基础信息，不告警也不阻断。
+ */
+async function readImageInfo(file) {
+  const size = readImageSize(file);
+  let exif;
+
+  try {
+    exif = await exifr.parse(file, {
+      // 按 exifr 自己的分组返回（ifd0 / exif / gps / interop），详情面板分节显示
+      mergeOutput: false,
+      tiff: true,
+      ifd0: true,
+      exif: true,
+      gps: true,
+      interop: true,
+      ifd1: false,
+      thumbnail: false, // 缩略图是二进制，清单里用不上
+      translateValues: true,
+      reviveValues: true,
+    });
+  } catch {
+    exif = undefined;
+  }
+
+  return {
+    width: size?.width,
+    height: size?.height,
+    bytes: statSync(file).size,
+    format: path.extname(file).slice(1).toLowerCase() || undefined,
+    exif: cleanExif(exif),
+  };
+}
+
+async function main() {
   if (process.env.SKBLOG_SKIP_IMAGE_SYNC === "1") {
     log("SKBLOG_SKIP_IMAGE_SYNC=1，跳过");
     return;
@@ -90,6 +153,7 @@ function main() {
   /** @type {Record<string, object>} */
   const manifest = {};
   const copied = new Map(); // 目标文件 → 站内地址，同一个文件被多处引用只拷一次
+  const infoCache = new Map(); // 源文件 → 构建期信息，同一个文件被多处引用只读一次
   let referenceCount = 0;
   let missingCount = 0;
 
@@ -134,14 +198,18 @@ function main() {
         copied.set(target, url);
       }
 
-      const size = readImageSize(file);
+      let info = infoCache.get(file);
+      if (!info) {
+        info = await readImageInfo(file);
+        infoCache.set(file, info);
+      }
+
       manifest[ref.raw] = {
         url,
-        width: size?.width,
-        height: size?.height,
         alt: ref.alt,
         ref: ref.raw,
         note,
+        ...info,
       };
     }
   }
@@ -152,8 +220,8 @@ function main() {
   log(
     `扫描 ${notes.length} 篇笔记：引用 ${referenceCount} 张，拷贝 ${copied.size} 张${
       missingCount > 0 ? `，缺失 ${missingCount} 张` : ""
-    } → ${path.relative(projectRoot, outputDir)}`,
+    }（${infoCache.size} 张带元信息）→ ${path.relative(projectRoot, outputDir)}`,
   );
 }
 
-main();
+await main();

@@ -21,11 +21,23 @@ export type NoteImageData = {
   ref: string;
   /** 引用它的笔记（诊断用） */
   note?: string;
+  /** 文件字节数（构建期读，详情面板用） */
+  bytes?: number;
+  /** 扩展名（小写、不带点，例如 jpg）；读不出时为 undefined */
+  format?: string;
+  /**
+   * exifr 抽出来的 EXIF，按它自己的分组（ifd0 / exif / gps / interop …）原样存着；
+   * 图片没有 EXIF（例如 PNG 截图）时没有这个字段。
+   */
+  exif?: Record<string, Record<string, unknown>>;
 };
 
-export type NoteBodyBlock =
-  | { type: "text"; text: string }
-  | { type: "image"; image: NoteImageData };
+/** 正文里的一张图 + 它下面那段说明（下一个图片引用之前的文字） */
+export type NotePhoto = {
+  image: NoteImageData;
+  /** 图片行之后到下一张图之前的 Markdown；紧跟着下一张图或者什么都没写时是 undefined */
+  caption?: string;
+};
 
 type Manifest = Record<string, NoteImageData>;
 
@@ -83,17 +95,21 @@ export function firstLineImage(body: string): {
 }
 
 /**
- * 把正文切成「文本块 + 图片块」：整行是一个图片引用的行单独成块，其余连续行原样保留为文本块
- * （当前仍是纯文本展示，接 Markdown 渲染后这套块渲染会被替换）。
+ * 正文里的图片（按出现顺序）+ 每张图自己的说明。
+ *
+ * 只有「整行就是一个图片引用」的行才算一张图（与封面规则同一套判断）；图片行之后、
+ * 下一张图之前的文字就是它的说明，页面在图片详情里原样渲染这段 Markdown。
+ * 第一张图之前的文字属于笔记的前言，不进相册。
  */
-export function bodyBlocks(body: string): NoteBodyBlock[] {
+export function bodyPhotos(body: string): NotePhoto[] {
   const lines = body.split(/\r?\n/);
-  const blocks: NoteBodyBlock[] = [];
+  const photos: NotePhoto[] = [];
   let buffer: string[] = [];
 
   const flush = () => {
-    const text = buffer.join("\n");
-    if (text.trim()) blocks.push({ type: "text", text });
+    const caption = buffer.join("\n").trim();
+    const last = photos.at(-1);
+    if (caption && last && !last.caption) last.caption = caption;
     buffer = [];
   };
 
@@ -101,19 +117,12 @@ export function bodyBlocks(body: string): NoteBodyBlock[] {
     const refs = parseImageRefs(line);
     if (refs.length === 1 && line.trim() === refs[0].raw.trim()) {
       flush();
-      blocks.push({ type: "image", image: getNoteImage(refs[0].raw, refs[0].alt) });
+      photos.push({ image: getNoteImage(refs[0].raw, refs[0].alt) });
       continue;
     }
     buffer.push(line);
   }
   flush();
 
-  return blocks;
-}
-
-/** 正文里出现的全部图片（按出现顺序），照片相册等场景用 */
-export function bodyImages(body: string): NoteImageData[] {
-  return bodyBlocks(body)
-    .filter((block): block is Extract<NoteBodyBlock, { type: "image" }> => block.type === "image")
-    .map((block) => block.image);
+  return photos;
 }

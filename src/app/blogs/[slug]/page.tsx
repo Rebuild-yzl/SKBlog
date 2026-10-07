@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import ImageZoomLayer from "@/components/image-zoom-layer";
+import Markdown from "@/components/markdown";
 import NoteImage from "@/components/note-image";
-import { bodyBlocks } from "@/lib/note-images";
 import { formatDate, getAllPosts, getPostBySlug } from "@/lib/notes";
 
 // 文章集合在构建时定死：不在 generateStaticParams 里的 slug 直接 404，不做按需渲染。
@@ -34,7 +35,11 @@ export default async function BlogPost({ params }: PageProps<"/blogs/[slug]">) {
 
   if (!post) notFound();
 
-  const blocks = bodyBlocks(post.body);
+  // 遮罩里的切换范围就是这篇的正文图（封面不算），顺序与正文里出现的顺序一致
+  const photos = post.images.map((image, position) => ({
+    id: `${post.slug}:${position}`,
+    image,
+  }));
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 p-6 font-sans lg:px-8">
@@ -73,30 +78,16 @@ export default async function BlogPost({ params }: PageProps<"/blogs/[slug]">) {
         />
       ) : null}
 
-      {/*
-        正文当前仍是纯文本展示（保留换行与空格），只把「整行是图片引用」的行渲染成图片块；
-        接入 Markdown 渲染后，这套块渲染会被整体替换掉。
-      */}
-      {blocks.length > 0 ? (
-        <article className="lightedge lightedge-solid flex flex-col gap-4 rounded-3xl bg-white p-6 shadow-sm dark:bg-zinc-950">
-          {blocks.map((block, index) =>
-            block.type === "image" ? (
-              <NoteImage
-                key={index}
-                image={block.image}
-                className="w-full rounded-2xl"
-                sizes="(min-width: 1024px) 48rem, 100vw"
-              />
-            ) : (
-              <pre
-                key={index}
-                className="font-mono text-sm leading-relaxed break-words whitespace-pre-wrap"
-              >
-                {block.text}
-              </pre>
-            ),
-          )}
-        </article>
+      {/* 正文：Markdown 在构建期渲染完；包一层图片层，点正文里的图会在本站内打开详情遮罩 */}
+      {post.body.trim() ? (
+        <ImageZoomLayer photos={photos} sourceLabel={`来自《${post.title}》`}>
+          <article className="lightedge lightedge-solid prose prose-zinc dark:prose-invert max-w-none rounded-3xl bg-white p-6 shadow-sm dark:bg-zinc-950">
+            <Markdown
+              content={post.body}
+              photoRefs={post.images.map((image) => image.ref)}
+            />
+          </article>
+        </ImageZoomLayer>
       ) : null}
     </div>
   );

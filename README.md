@@ -29,7 +29,8 @@ NeuroSaiKou 的个人网站 —— 用来放博客、作品、项目与收藏的
 | 样式 | Tailwind CSS 4 + PostCSS（`@tailwindcss/postcss`） |
 | 设计系统 | Tailwind 4 的 `@theme` / `@utility`：`glass-panel`、`lightedge`（采样描边）、`blur-card`，详见 [docs/styling.md](./docs/styling.md) |
 | 内容来源 | 独立的**笔记仓库**（Obsidian vault 的 Git 仓库），构建时用 `git` 浅克隆同步，详见 [docs/notes-sync.md](./docs/notes-sync.md) |
-| 内容解析 | [gray-matter](https://github.com/jonschlinkert/gray-matter)（读取笔记 frontmatter；正文当前只做纯文本展示） |
+| 内容解析 | [gray-matter](https://github.com/jonschlinkert/gray-matter) 读 frontmatter；正文 [react-markdown](https://github.com/remarkjs/react-markdown) + [remark-gfm](https://github.com/remarkjs/remark-gfm) / [remark-math](https://github.com/remarkjs/remark-math) + [rehype-katex](https://github.com/remarkjs/remark-math) + [@shikijs/rehype](https://shiki.style/packages/rehype)，全部在构建期渲染；排版用 `@tailwindcss/typography` 的 `prose` |
+| 笔记图片 | 附件目录里的图片构建期拷到 `public/notes-assets/`，宽高/字节数/EXIF 用 [exifr](https://github.com/MikeKovarik/exifr) 一起读进清单（见 [docs/notes-sync.md](./docs/notes-sync.md#图片与附件附件目录--图片控件)） |
 | 图标 | [skillicons.dev](https://skillicons.dev) 的图标在构建时抓取并自托管到 `public/`（访客不访问第三方 CDN） |
 | 音乐 | 只存网易云歌曲 ID（写在笔记仓库里），元信息构建期抓取缓存；播放时浏览器直接向解析接口取地址并 302 到网易云 CDN —— 音频不经过 Vercel |
 | 字体 / 图片 | `next/font/google`（Geist / Geist Mono）、`next/image`（SVG 用 `unoptimized`） |
@@ -82,7 +83,7 @@ src/
 │  ├─ blogs/[slug]/page.tsx  # 博客详情（构建期由 generateStaticParams 生成静态页）
 │  ├─ favorites/page.tsx     # 收藏分类页（音乐收藏 / 图片收藏…）
 │  ├─ favorites/music/page.tsx # 音乐收藏：大播放器 + 曲目列表
-│  ├─ favorites/photos/page.tsx # 图片收藏：按相册分组的照片网格
+│  ├─ favorites/photos/page.tsx # 图片收藏：全部照片的瀑布流 + 图片详情遮罩层
 │  ├─ participate/page.tsx   # 参与
 │  ├─ projects/page.tsx      # 项目
 │  └─ works/page.tsx         # 作品
@@ -90,6 +91,7 @@ src/
 │  ├─ notes.ts               # 笔记读取层：遍历 .notes/、按 frontmatter 过滤、组装出 Post
 │  ├─ note-images.ts         # 图片数据层：查构建期清单，封面/正文图片都从这里取
 │  ├─ note-images.mjs        # 图片引用解析与宽高读取（脚本与页面共用）
+│  ├─ obsidian-syntax.mjs    # Obsidian 语法 → 标准 Markdown 的两个 remark 插件（图片引用 / callout）
 │  ├─ photos.ts              # 相册数据层：type: photos 的笔记 → 相册
 │  ├─ music.ts               # 音乐数据层：歌单 + 单曲，合并构建期抓到的元信息
 │  ├─ collections.ts         # 收藏分类清单（图标 / 标题 / 链接 / 敬请期待），加分类只加一行
@@ -107,6 +109,11 @@ src/
    ├─ music-panel.tsx        # 音乐页的大播放器（与迷你条共用同一份播放状态）
    ├─ music-card.tsx         # 音乐卡片：普通卡片 + 一层封面副本背板（做模糊染色底）
    ├─ note-image.tsx         # 统一图片控件：正常渲染图片，缺失时自己渲染「图片未找到」
+   ├─ markdown.tsx           # 正文 Markdown 渲染（服务端组件：GFM / 公式 / callout / 代码高亮）
+   ├─ callout.tsx            # Obsidian callout 的样式与图标（八组配色，折叠用原生 details）
+   ├─ photo-viewer.tsx       # 图片详情遮罩层：大图 + 缩略图横条 + 元数据（博客与照片页共用）
+   ├─ image-zoom-layer.tsx   # 博客正文的图片层：事件委托打开遮罩，切换只在本篇正文图内
+   ├─ photo-browser.tsx      # 照片页主体：瀑布流 + 打开遮罩
    ├─ music-backdrop.tsx     # 音乐页整屏背景：封面放大模糊 + scrim（跟随面板当前那首）
    ├─ song-row.tsx           # 收藏页的单曲行（点整行播放）
    └─ lightedge-blur-card.tsx # 毛玻璃卡片：blur-card + 平级的假 border（采样卡片背后的页面）
@@ -136,10 +143,10 @@ docs/                        # 详细文档（见文末[文档](#文档)一节�
 - [x] `/` — Home：已有内容
 - [x] `/about` — About：横幅卡片 + 个人名片卡片
 - [ ] `/analytics` — Analytics：仅挂载 Vercel Analytics
-- [x] `/blogs` — Blogs：列表 + 详情（`/blogs/[slug]`），内容来自笔记仓库（见下节）；仓库里没有 `publish: true` 的笔记时仍是空态占位
+- [x] `/blogs` — Blogs：列表 + 详情（`/blogs/[slug]`），正文是笔记里的 Markdown（GFM / 公式 / callout / 代码高亮，构建期渲染），正文里的图点开就是图片详情遮罩层（见 [docs/notes-sync.md](./docs/notes-sync.md#正文渲染)）；仓库里没有 `publish: true` 的笔记时仍是空态占位
 - [x] `/favorites` — Favorites：收藏分类页（分类清单见 `src/lib/collections.ts`）
 - [x] `/favorites/music` — 音乐收藏：左侧大播放器 + 右侧按歌单分组的曲目列表，点任意一行在站内播放；本页隐藏迷你播放条（见 [docs/notes-sync.md](./docs/notes-sync.md#音乐收藏type-music)）
-- [x] `/favorites/photos` — 图片收藏：按相册（`type: photos` 笔记）分组的照片网格，图片来自笔记仓库的附件目录（见 [docs/notes-sync.md](./docs/notes-sync.md#图片与附件附件目录--图片控件)）
+- [x] `/favorites/photos` — 图片收藏：全部照片按自身比例排成瀑布流（相册名标在图上），点任意一张打开图片详情遮罩层（大图 + 缩略图横条 + 说明与元数据），切换范围是整个收藏页（见 [docs/notes-sync.md](./docs/notes-sync.md#图片详情遮罩层)）
 - [ ] `/participate` — Participate：空态占位（`NothingHere`）
 - [ ] `/projects` — Projects：空态占位（`NothingHere`）
 - [ ] `/works` — Works：空态占位（`NothingHere`）

@@ -1,13 +1,13 @@
 import fs from "node:fs";
 import path from "node:path";
 import matter from "gray-matter";
-import { bodyImages, type NoteImageData } from "./note-images";
+import { bodyPhotos, type NotePhoto } from "./note-images";
 
 /**
  * 照片收藏的数据层（只在服务端/构建期使用）。
  *
  * 规则与音乐收藏同源：frontmatter 里写 `type: photos` 的笔记就是**一个相册**，
- * 正文里的图片按顺序进相册（正文的其它文字留给以后的图片详情页用）。
+ * 正文里的图片按顺序进相册，每张图后面那段文字就是它自己的说明（图片详情里渲染）。
  * 这类笔记不会出现在 /blogs（见 notes.ts）。
  */
 
@@ -16,7 +16,7 @@ export type Album = {
   id: string;
   /** 相册名：frontmatter.title，缺省用文件名 */
   name: string;
-  images: NoteImageData[];
+  photos: NotePhoto[];
   /** 源文件相对笔记仓库的路径 */
   source: string;
 };
@@ -51,15 +51,15 @@ function collectAlbums(): Album[] {
     const { data, content } = matter(fs.readFileSync(file, "utf8"));
     if (data.type !== "photos") continue;
 
-    const images = bodyImages(content);
-    if (images.length === 0) continue;
+    const photos = bodyPhotos(content);
+    if (photos.length === 0) continue;
 
     const relative = path.relative(root, file).split(path.sep).join("/");
     const baseName = path.basename(file, path.extname(file));
     albums.push({
       id: relative.replace(MD_PATTERN, ""),
       name: (typeof data.title === "string" && data.title.trim()) || baseName,
-      images,
+      photos,
       source: relative,
     });
   }
@@ -80,5 +80,5 @@ export function getAlbums(): Album[] {
 
 /** 所有相册里的照片总数，收藏分类页用来显示计数 */
 export function countPhotos(albums: Album[]): number {
-  return albums.reduce((sum, album) => sum + album.images.length, 0);
+  return albums.reduce((sum, album) => sum + album.photos.length, 0);
 }

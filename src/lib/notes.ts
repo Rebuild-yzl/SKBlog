@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import matter from "gray-matter";
 import {
-  bodyImages,
+  bodyPhotos,
   firstLineImage,
   type NoteImageData,
 } from "./note-images";
@@ -31,7 +31,10 @@ export type Post = {
   body: string;
   /** 正文第一行整行是图片时，那张图就是封面 */
   cover?: NoteImageData;
-  /** 正文里出现的图片（按顺序），封面不算在内 */
+  /**
+   * 正文里出现的图片（按顺序），封面不算在内。
+   * 只收「构建期真的解析到了」的图 —— 缺图在正文里仍会渲染成提示块，但不进图片详情列表。
+   */
   images: NoteImageData[];
   /** 源文件相对笔记仓库的路径，构建报错时方便定位 */
   source: string;
@@ -137,6 +140,7 @@ function readPost(file: string, root: string): Post | undefined {
 
   // 正文第一行整行是图片引用时，那张图就是封面（并从正文里去掉这一行与紧随的 ---）
   const { cover, rest } = firstLineImage(content);
+  const photos = bodyPhotos(rest);
 
   return {
     slug,
@@ -150,7 +154,9 @@ function readPost(file: string, root: string): Post | undefined {
     tags: toStringArray(data.tags),
     body: rest,
     cover: cover ?? undefined,
-    images: bodyImages(rest),
+    images: photos
+      .map((photo) => photo.image)
+      .filter((image) => !image.missing && Boolean(image.url)),
     source: relative,
   };
 }

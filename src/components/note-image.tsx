@@ -17,6 +17,7 @@ export default function NoteImage({
   fit = "contain",
   loading,
   fetchPriority,
+  photoIndex,
 }: {
   image: NoteImageData;
   alt?: string;
@@ -30,6 +31,11 @@ export default function NoteImage({
   loading?: "eager" | "lazy";
   /** 首屏（LCP）大图配合 loading="eager" 一起用，Next 16 里它就是以前 priority 的替代 */
   fetchPriority?: "high" | "low" | "auto";
+  /**
+   * 这张图在「图片详情遮罩」列表里的下标；写在 <img> 上，由外层的图片层做点击委托。
+   * 没有（缺图、外部图不在列表里）就不写，图片自然不可点。
+   */
+  photoIndex?: number;
 }) {
   if (image.missing || !image.url) {
     return <MissingImage refName={image.ref} className={className} />;
@@ -49,6 +55,7 @@ export default function NoteImage({
         unoptimized={remote}
         loading={loading}
         fetchPriority={fetchPriority}
+        data-photo-index={photoIndex}
         className={className}
       />
     );
@@ -64,6 +71,7 @@ export default function NoteImage({
         unoptimized
         loading={loading}
         fetchPriority={fetchPriority}
+        data-photo-index={photoIndex}
         className={fit === "cover" ? "object-cover" : "object-contain"}
       />
     </span>
