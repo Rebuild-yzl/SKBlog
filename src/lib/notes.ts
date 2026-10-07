@@ -1,6 +1,11 @@
 import fs from "node:fs";
 import path from "node:path";
 import matter from "gray-matter";
+import {
+  bodyImages,
+  firstLineImage,
+  type NoteImageData,
+} from "./note-images";
 
 /**
  * 笔记仓库 → 博客内容的读取层（只在服务端/构建期使用，别在客户端组件里 import）。
@@ -24,6 +29,10 @@ export type Post = {
   tags: string[];
   /** Markdown 正文原文（已去掉 frontmatter），当前直接当纯文本展示 */
   body: string;
+  /** 正文第一行整行是图片时，那张图就是封面 */
+  cover?: NoteImageData;
+  /** 正文里出现的图片（按顺序），封面不算在内 */
+  images: NoteImageData[];
   /** 源文件相对笔记仓库的路径，构建报错时方便定位 */
   source: string;
 };
@@ -102,8 +111,8 @@ function isPublished(value: unknown): boolean {
 function readPost(file: string, root: string): Post | undefined {
   const raw = fs.readFileSync(file, "utf8");
   const { data, content } = matter(raw);
-  // 音乐收藏笔记（type: music）由 src/lib/music.ts 处理，不该同时变成一篇博客
-  if (data.type === "music") return undefined;
+  // 其它类型的笔记各有归属（音乐 → music.ts、相册 → photos.ts），不该同时变成博客
+  if (data.type === "music" || data.type === "photos") return undefined;
   if (!isPublished(data.publish)) return undefined;
 
   const relative = path.relative(root, file).split(path.sep).join("/");
@@ -126,6 +135,9 @@ function readPost(file: string, root: string): Post | undefined {
     coerceDate(baseName.match(/^\d{4}-\d{2}-\d{2}/)?.[0]) ??
     fs.statSync(file).mtime;
 
+  // 正文第一行整行是图片引用时，那张图就是封面（并从正文里去掉这一行与紧随的 ---）
+  const { cover, rest } = firstLineImage(content);
+
   return {
     slug,
     // 标题只认 frontmatter.title，缺省用文件名 —— 刻意不读正文里的 `# 标题`：
@@ -136,7 +148,9 @@ function readPost(file: string, root: string): Post | undefined {
       (typeof data.description === "string" && data.description.trim()) ||
       undefined,
     tags: toStringArray(data.tags),
-    body: content,
+    body: rest,
+    cover: cover ?? undefined,
+    images: bodyImages(rest),
     source: relative,
   };
 }

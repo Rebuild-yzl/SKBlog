@@ -82,11 +82,15 @@ src/
 │  ├─ blogs/[slug]/page.tsx  # 博客详情（构建期由 generateStaticParams 生成静态页）
 │  ├─ favorites/page.tsx     # 收藏分类页（音乐收藏 / 图片收藏…）
 │  ├─ favorites/music/page.tsx # 音乐收藏：大播放器 + 曲目列表
+│  ├─ favorites/photos/page.tsx # 图片收藏：按相册分组的照片网格
 │  ├─ participate/page.tsx   # 参与
 │  ├─ projects/page.tsx      # 项目
 │  └─ works/page.tsx         # 作品
 ├─ lib/
 │  ├─ notes.ts               # 笔记读取层：遍历 .notes/、按 frontmatter 过滤、组装出 Post
+│  ├─ note-images.ts         # 图片数据层：查构建期清单，封面/正文图片都从这里取
+│  ├─ note-images.mjs        # 图片引用解析与宽高读取（脚本与页面共用）
+│  ├─ photos.ts              # 相册数据层：type: photos 的笔记 → 相册
 │  ├─ music.ts               # 音乐数据层：歌单 + 单曲，合并构建期抓到的元信息
 │  ├─ collections.ts         # 收藏分类清单（图标 / 标题 / 链接 / 敬请期待），加分类只加一行
 │  ├─ music-notes.mjs        # 音乐笔记的扫描规则（目录=歌单、正文每行一个 ID），页面与脚本共用
@@ -102,12 +106,14 @@ src/
    ├─ music-player.tsx       # 站内播放器（客户端组件，挂在根布局，切页不中断）
    ├─ music-panel.tsx        # 音乐页的大播放器（与迷你条共用同一份播放状态）
    ├─ music-card.tsx         # 音乐卡片：普通卡片 + 一层封面副本背板（做模糊染色底）
+   ├─ note-image.tsx         # 统一图片控件：正常渲染图片，缺失时自己渲染「图片未找到」
    ├─ music-backdrop.tsx     # 音乐页整屏背景：封面放大模糊 + scrim（跟随面板当前那首）
    ├─ song-row.tsx           # 收藏页的单曲行（点整行播放）
    └─ lightedge-blur-card.tsx # 毛玻璃卡片：blur-card + 平级的假 border（采样卡片背后的页面）
 
 scripts/
 ├─ sync-notes.mjs            # 构建/开发前把笔记仓库同步到 .notes/（本地目录或 Git 两种来源）
+├─ sync-note-images.mjs      # 构建/开发前把被引用的图片从附件目录拷到 public/notes-assets/
 ├─ fetch-tool-icons.mjs      # 构建/开发前把工具图标抓到 public/icons/toolchain/（自托管，用户端不访问 CDN）
 └─ fetch-music-meta.mjs      # 构建/开发前把音乐元信息抓到 .cache/（抓不到只警告，不阻断构建）
 
@@ -133,6 +139,7 @@ docs/                        # 详细文档（见文末[文档](#文档)一节�
 - [x] `/blogs` — Blogs：列表 + 详情（`/blogs/[slug]`），内容来自笔记仓库（见下节）；仓库里没有 `publish: true` 的笔记时仍是空态占位
 - [x] `/favorites` — Favorites：收藏分类页（分类清单见 `src/lib/collections.ts`）
 - [x] `/favorites/music` — 音乐收藏：左侧大播放器 + 右侧按歌单分组的曲目列表，点任意一行在站内播放；本页隐藏迷你播放条（见 [docs/notes-sync.md](./docs/notes-sync.md#音乐收藏type-music)）
+- [x] `/favorites/photos` — 图片收藏：按相册（`type: photos` 笔记）分组的照片网格，图片来自笔记仓库的附件目录（见 [docs/notes-sync.md](./docs/notes-sync.md#图片与附件附件目录--图片控件)）
 - [ ] `/participate` — Participate：空态占位（`NothingHere`）
 - [ ] `/projects` — Projects：空态占位（`NothingHere`）
 - [ ] `/works` — Works：空态占位（`NothingHere`）
