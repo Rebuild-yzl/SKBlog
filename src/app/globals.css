@@ -1,4 +1,6 @@
 @import "tailwindcss";
+/* 正文排版：prose 系列工具类（见 docs/notes-sync.md 的「正文渲染」一节） */
+@plugin "@tailwindcss/typography";
 
 /*
  * 明暗色由 class 驱动：.dark 挂在 <html> 上（layout.tsx 里的内联脚本在首绘前按
@@ -249,4 +251,44 @@ html {
 body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/*
+ * 正文（Markdown 渲染结果）的几处收口。样式主体来自 prose 预设，这里只改三件事。
+ */
+
+/*
+ * 代码块：Shiki 用「浅色内联样式 + --shiki-dark* 变量」的方式输出双主题，
+ * 暗色下要把颜色换成变量的值。内联样式优先级高于类名，所以必须 !important。
+ */
+.dark .shiki,
+.dark .shiki span {
+  color: var(--shiki-dark) !important;
+  background-color: var(--shiki-dark-bg) !important;
+  font-style: var(--shiki-dark-font-style) !important;
+  font-weight: var(--shiki-dark-font-weight) !important;
+  text-decoration: var(--shiki-dark-text-decoration) !important;
+}
+
+/* 代码块：圆角与描边跟着卡片走，水平滚动留在 <pre> 自己身上 */
+.prose pre {
+  border-radius: 0.75rem;
+  border-width: 1px;
+  overflow-x: auto;
+}
+
+/* 表格：边框统一用全局 --border，和站内其它描边一致 */
+.prose table th,
+.prose table td {
+  border-color: var(--border);
+}
+
+/*
+ * 数学公式：长公式（尤其是带 \ce 的化学式）在小屏上会超出内容宽度，
+ * 让整块公式自己横向滚动，而不是把页面撑出横向滚动条。
+ */
+.prose .katex-display {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-block: 0.25rem;
 }
