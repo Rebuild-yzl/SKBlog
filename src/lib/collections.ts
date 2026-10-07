@@ -27,8 +27,8 @@ export const COLLECTIONS: Collection[] = [
   {
     id: "images",
     title: "图片收藏",
-    description: "还没做——想收的图先放笔记里也行",
+    description: "相册形式的照片收藏，图片同样来自笔记仓库",
     icon: "image",
-    soon: true,
+    href: "/favorites/photos",
   },
 ];

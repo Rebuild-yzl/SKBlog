@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { COLLECTIONS, type CollectionIcon } from "@/lib/collections";
 import { getPlaylists } from "@/lib/music";
+import { countPhotos, getAlbums } from "@/lib/photos";
 
 export const metadata: Metadata = {
   title: "Favorites | NeuroSaiKou",
@@ -14,6 +15,8 @@ export default function Favorites() {
     (sum, playlist) => sum + playlist.songs.length,
     0,
   );
+  const albums = getAlbums();
+  const photoCount = countPhotos(albums);
 
   return (
     <div className="flex flex-1 flex-col gap-6 p-6 font-sans lg:px-8">
@@ -31,7 +34,9 @@ export default function Favorites() {
           const meta =
             collection.id === "music"
               ? `${playlists.length} 个歌单 · ${total} 首`
-              : null;
+              : collection.id === "images"
+                ? `${albums.length} 个相册 · ${photoCount} 张`
+                : null;
           const clickable = Boolean(collection.href) && !collection.soon;
           const cardClass =
             "lightedge lightedge-solid flex w-full items-start gap-4 rounded-3xl bg-white p-6 text-left shadow-sm dark:bg-zinc-950";

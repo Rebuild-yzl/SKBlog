@@ -49,3 +49,6 @@ next-env.d.ts
 
 # 音乐元信息缓存（由 scripts/fetch-music-meta.mjs 抓取，几小时就会过期，不入库）
 /.cache/
+
+# 笔记图片（由 scripts/sync-note-images.mjs 从附件目录拷入，产物不入库）
+/public/notes-assets/

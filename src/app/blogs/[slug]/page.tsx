@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import NoteImage from "@/components/note-image";
+import { bodyBlocks } from "@/lib/note-images";
 import { formatDate, getAllPosts, getPostBySlug } from "@/lib/notes";
 
 // 文章集合在构建时定死：不在 generateStaticParams 里的 slug 直接 404，不做按需渲染。
@@ -32,6 +34,8 @@ export default async function BlogPost({ params }: PageProps<"/blogs/[slug]">) {
 
   if (!post) notFound();
 
+  const blocks = bodyBlocks(post.body);
+
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 p-6 font-sans lg:px-8">
       <header className="flex flex-col gap-3">
@@ -58,12 +62,42 @@ export default async function BlogPost({ params }: PageProps<"/blogs/[slug]">) {
         </div>
       </header>
 
-      {/* 当前只做纯文本展示：正文原样输出（保留换行与空格），不渲染 Markdown。 */}
-      <article className="lightedge lightedge-solid rounded-3xl bg-white p-6 shadow-sm dark:bg-zinc-950">
-        <pre className="font-mono text-sm leading-relaxed break-words whitespace-pre-wrap">
-          {post.body.trim()}
-        </pre>
-      </article>
+      {/* 封面：正文第一行整行是图片引用时才有 */}
+      {post.cover ? (
+        <NoteImage
+          image={post.cover}
+          alt={post.title}
+          className="w-full rounded-3xl"
+          sizes="(min-width: 1024px) 48rem, 100vw"
+          loading="eager"
+        />
+      ) : null}
+
+      {/*
+        正文当前仍是纯文本展示（保留换行与空格），只把「整行是图片引用」的行渲染成图片块；
+        接入 Markdown 渲染后，这套块渲染会被整体替换掉。
+      */}
+      {blocks.length > 0 ? (
+        <article className="lightedge lightedge-solid flex flex-col gap-4 rounded-3xl bg-white p-6 shadow-sm dark:bg-zinc-950">
+          {blocks.map((block, index) =>
+            block.type === "image" ? (
+              <NoteImage
+                key={index}
+                image={block.image}
+                className="w-full rounded-2xl"
+                sizes="(min-width: 1024px) 48rem, 100vw"
+              />
+            ) : (
+              <pre
+                key={index}
+                className="font-mono text-sm leading-relaxed break-words whitespace-pre-wrap"
+              >
+                {block.text}
+              </pre>
+            ),
+          )}
+        </article>
+      ) : null}
     </div>
   );
 }
