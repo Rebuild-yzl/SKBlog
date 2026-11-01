@@ -6,7 +6,7 @@ import { useNowPlaying } from "@/components/music-player";
 /*
  * 音乐页的整屏背景：把当前那首的封面放大、重模糊铺满视口，再压一层 scrim 保证文字可读。
  *
- * 和 MusicCard 的背板同源（都是"拿封面当底色"），区别是这里作用在页面级：fixed 铺满视口、
+ * 和 BackdropCard 的背板同源（都是"拿封面当底色"），区别是这里作用在页面级：fixed 铺满视口、
  * 压在内容下面 —— 所以它必须挂在音乐页那层 `relative isolate` 容器里（见 favorites/music/page.tsx）。
  *
  * 浓度由 scrim 的透明度决定：想更浓就把 bg-white/65 调低（比如 /40），想更干净就调高。

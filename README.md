@@ -103,11 +103,11 @@ src/
    ├─ notice-card.tsx        # 错误页/404 共用的提示卡片（附两个按钮样式常量）
    ├─ nothing-here.tsx       # 空态占位（图标 + 两句文案，不套卡片）
    ├─ banner.tsx             # 横幅卡片：圆角边框，按 16:9 完整展示图片（不裁切），文字用 glass-panel 方块
-   ├─ profile.tsx            # 个人名片（头像 + 名称 + 描述）
+   ├─ profile.tsx            # 个人名片（头像填满背板 + 名称 + 描述）
    ├─ profile-details.tsx    # 名片下方的补充信息：在校状态 / 地点 / 邮箱 / 工具图标（无卡片边框）
    ├─ music-player.tsx       # 站内播放器（客户端组件，挂在根布局，切页不中断）
    ├─ music-panel.tsx        # 音乐页的大播放器（与迷你条共用同一份播放状态）
-   ├─ music-card.tsx         # 音乐卡片：普通卡片 + 一层封面副本背板（做模糊染色底）
+   ├─ backdrop-card.tsx      # 整卡图片背板的毛玻璃卡片（音乐卡片/名片共用）
    ├─ note-image.tsx         # 统一图片控件：正常渲染图片，缺失时自己渲染「图片未找到」
    ├─ markdown.tsx           # 正文 Markdown 渲染（服务端组件：GFM / 公式 / callout / 代码高亮）
    ├─ callout.tsx            # Obsidian callout 的样式与图标（八组配色，折叠用原生 details）
@@ -116,7 +116,7 @@ src/
    ├─ photo-browser.tsx      # 照片页主体：瀑布流 + 打开遮罩
    ├─ music-backdrop.tsx     # 音乐页整屏背景：封面放大模糊 + scrim（跟随面板当前那首）
    ├─ song-row.tsx           # 收藏页的单曲行（点整行播放）
-   └─ lightedge-blur-card.tsx # 毛玻璃卡片：blur-card + 平级的假 border（采样卡片背后的页面）
+   └─ lightedge-blur-card.tsx # 毛玻璃卡片：玻璃层 + 平级假 border + 内容层（内容不在玻璃的 backdrop root 里）
 
 scripts/
 ├─ sync-notes.mjs            # 构建/开发前把笔记仓库同步到 .notes/（本地目录或 Git 两种来源）

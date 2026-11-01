@@ -307,32 +307,43 @@ export default function MusicProvider({
       {visible ? (
         <div className="fixed inset-x-0 bottom-0 z-40 p-2 sm:p-4">
           <div className="mx-auto w-full max-w-5xl">
-            <div className="absolute overflow-hidden m-3 size-12 shrink-0 rounded-xl bg-zinc-100 dark:bg-zinc-900">
-              {currentSong?.cover ? (
-                <Image
-                  src={currentSong.cover}
-                  alt=""
-                  width={96}
-                  height={96}
-                  unoptimized
-                  className="size-full object-cover"
-                />
-              ) : null}
-            </div>
             <LightedgeBlurCard
               wrapperClassName="mx-auto w-full max-w-5xl"
-              // radiusClassName="rounded-xl"
               className="flex items-center gap-3 p-3"
+              // 迷你条的背板不是整条铺图：只放一张和卡片里封面同位置、同尺寸的副本，
+              // 让卡片自己的 backdrop-filter 把封面颜色糊在封面周围（原版做法）。
+              backdrop={
+                currentSong?.cover ? (
+                  <div className="absolute left-3 top-3 size-12 overflow-hidden rounded-xl bg-zinc-100 dark:bg-zinc-900">
+                    <Image
+                      src={currentSong.cover}
+                      alt=""
+                      width={96}
+                      height={96}
+                      unoptimized
+                      className="size-full object-cover"
+                    />
+                  </div>
+                ) : null
+              }
             >
-              <div className="relative size-12 shrink-0 overflow-hidden rounded-xl bg-zinc-100 dark:bg-zinc-900">
+              <div className="relative size-12 shrink-0">
+                <div className="size-full overflow-hidden rounded-xl bg-zinc-100 dark:bg-zinc-900">
+                  {currentSong?.cover ? (
+                    <Image
+                      src={currentSong.cover}
+                      alt=""
+                      width={96}
+                      height={96}
+                      unoptimized
+                      className="size-full object-cover"
+                    />
+                  ) : null}
+                </div>
                 {currentSong?.cover ? (
-                  <Image
-                    src={currentSong.cover}
-                    alt=""
-                    width={96}
-                    height={96}
-                    unoptimized
-                    className="size-full object-cover"
+                  <div
+                    aria-hidden
+                    className="lightedge lightedge-1 -lightedge-inset-1 lightedge-blur-2 lightedge-brightness-160 pointer-events-none absolute inset-0 rounded-xl [--lightedge-tint:transparent]"
                   />
                 ) : null}
               </div>

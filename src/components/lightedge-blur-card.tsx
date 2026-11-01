@@ -5,34 +5,38 @@ type LightedgeBlurCardProps = {
   className?: string;
   /** 外壳的类名，用来定位/限宽（sticky、absolute inset-x-0、mx-auto max-w-5xl…） */
   wrapperClassName?: string;
-  /** 圆角类，卡片与假 border 必须一致，默认 rounded-3xl */
+  /** 圆角类，卡片与假 border 必须一致，默认 rounded-xl */
   radiusClassName?: string;
-  /** 调假 border 用的类名（例如 lightedge-2 加粗、-lightedge-inset-1 让它完全落在卡片外侧） */
+  /** 调假 border 用的类名（例如 lightedge-2 加粗、-lightedge-inset-1 让它再往外推） */
   borderClassName?: string;
   /**
-   * 背板：渲染在外壳里、假 border 与卡片**之前**（也就是卡片下面），自动铺满整卡并裁到圆角。
-   * 卡片自己的 backdrop-filter 会把它糊成一层带色底——音乐卡片就靠它做"封面模糊背板"。
+   * 背板：渲染在外壳里、假 border 与玻璃层**之前**（也就是玻璃下面），自动铺满整卡并裁到圆角。
+   * 玻璃层（blur-card）会把它糊成一层带色底——BackdropCard、播放条和名片的局部副本都靠它。
    */
   backdrop?: ReactNode;
   children: ReactNode;
 };
 
 /*
- * 毛玻璃卡片：blur-card（半透明底 + backdrop-filter）+ 一条「假 border」。
+ * 毛玻璃卡片：外壳 + 背板 + 「假 border」+ 玻璃层 + 内容层。
  *
- * 结构上刻意让两者平级、并且把假 border 画在卡片**下面**：
- *   <div class="relative">              只负责定位
- *     <div class="lightedge …">         假 border（先画 → 在卡片下面）
- *     <div class="blur-card …">…</div>  卡片本体
- *   </div>
+ * 结构上刻意把这三者拆开：
+ *   <div class="relative">                只负责定位
+ *     <div class="… backdrop">            背板（可选，画在玻璃下面）
+ *     <div class="lightedge …">           假 border（画在玻璃外面，采样页面）
+ *     <div class="blur-card absolute …">  玻璃层：背景 + backdrop-filter
+ *     <div class="relative …">…</div>     内容层：文字、头像/封面环…
  *
- * 为什么不把描边直接挂在卡片上：backdrop-filter 会创建 backdrop root，卡片内部的一切
- * （包括自己的伪元素）只能采样到「自己那层已经模糊过的合成结果」，边缘提亮会失效
- * （docs/styling.md 里有实测数据）。搬到卡片外面之后，假 border 采样到的是卡片背后的页面，
- * 再压上 --lightedge-line 的色调，才是一条跟着背景走的模拟描边。
+ * 为什么假 border 不挂在玻璃层上：backdrop-filter 会创建 backdrop root，挂在玻璃层上的
+ * 环只能采样到玻璃自己那层已模糊的结果，必须画在外面（docs/styling.md 有实测数据）。
  *
- * 画在下面而不是上面，是为了让它的采样范围里不含卡片本身。环的粗细与位置继续用现成的
- * lightedge-* 工具类调，通过 borderClassName 传进来。
+ * 为什么内容层和玻璃层平级：内容里的 lightedge 环（头像、封面高亮）也需要采样图片本身的
+ * 边缘；如果把它们放进玻璃层里面，就同样被玻璃层的 backdrop root 挡住，亮边会消失。
+ * 拆成平级后，玻璃只负责颜色和模糊，内容里的环继续工作。
+ *
+ * 假 border 默认 1px：环层外扩 1px、环自身 inset 0，环正好贴在卡片外缘，和 banner 的 1px
+ * 亮边同宽。注意别写 Tailwind 的 -inset-0.5——它在间距刻度里是 2px，环会被推到卡片外
+ * 2.5px，看着就变粗。个别位置要再调，仍可通过 borderClassName 传 lightedge-* 工具类覆盖。
  */
 export default function LightedgeBlurCard({
   className = "",
@@ -54,9 +58,15 @@ export default function LightedgeBlurCard({
       ) : null}
       <div
         aria-hidden
-        className={`lightedge lightedge-4 pointer-events-none absolute -inset-0.5 ${radiusClassName} ${borderClassName}`}
+        className={`lightedge lightedge-1 pointer-events-none absolute -inset-px [--lightedge-inset:0px] ${radiusClassName} ${borderClassName}`}
       />
-      <div className={`blur-card relative ${radiusClassName} ${className}`}>
+      <div
+        aria-hidden
+        className={`blur-card pointer-events-none absolute inset-0 ${radiusClassName}`}
+      />
+      <div
+        className={`relative z-10 overflow-clip ${radiusClassName} ${className}`}
+      >
         {children}
       </div>
     </div>
