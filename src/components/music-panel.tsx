@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import MusicCard from "@/components/music-card";
+import BackdropCard from "@/components/backdrop-card";
 import {
   PlayerIcon,
   formatTime,
@@ -41,8 +41,8 @@ export default function MusicPanel({ className = "" }: { className?: string }) {
   const failedNow = isCurrent && failed;
 
   return (
-    <MusicCard
-      cover={song.cover}
+    <BackdropCard
+      backgroundSrc={song.cover}
       wrapperClassName={className}
       /*
        * 窄屏与 lg（面板被挤在窄栏里）：上下堆叠。
@@ -146,6 +146,6 @@ export default function MusicPanel({ className = "" }: { className?: string }) {
           className="h-1 w-full accent-zinc-900 dark:accent-zinc-100"
         />
       </div>
-    </MusicCard>
+    </BackdropCard>
   );
 }

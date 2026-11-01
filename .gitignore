@@ -52,3 +52,5 @@ next-env.d.ts
 
 # 笔记图片（由 scripts/sync-note-images.mjs 从附件目录拷入，产物不入库）
 /public/notes-assets/
+
+design

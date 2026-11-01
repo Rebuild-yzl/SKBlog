@@ -1,4 +1,4 @@
-# 毛玻璃样式（glass-panel / blur-card / LightedgeBlurCard）
+# 毛玻璃样式（glass-panel / blur-card / LightedgeBlurCard / BackdropCard）
 
 定义在 `src/app/globals.css`，用 Tailwind 4 的 `@utility` 注册，写在一起是为了以后只改一处就能全局生效。
 
@@ -77,11 +77,11 @@
 
 > 这也解释了为什么早先那条「偶发给出的边缘亮线」挺好看：它不是 CSS 画的，而是 `backdrop-filter` 在合成边缘时留下的 1px 伪影，恰好也是「跟着背景亮度走」。现在的实现把这个效果变成了确定可复现的样式。
 
-## `blur-card` 与 `LightedgeBlurCard`（毛玻璃卡片）
+## `blur-card` 与 `LightedgeBlurCard` / `BackdropCard`（毛玻璃卡片）
 
-`blur-card` 是毛玻璃卡片本体的工具类：半透明底 + `backdrop-filter` + `overflow: clip`，圆角、内边距、尺寸都由使用处设置。它**只管模糊，不管描边**。
+`blur-card` 是毛玻璃的玻璃层：半透明底 + `backdrop-filter` + `overflow: clip`；圆角、尺寸由使用处设置。它**只管模糊，不管描边，也不承载内容**——`LightedgeBlurCard` 把玻璃层和内容层拆成了平级。
 
-要带描边的毛玻璃卡片（导航栏胶囊与折叠菜单、播放条）统一用 `LightedgeBlurCard`：
+要带描边的毛玻璃卡片（导航栏胶囊与折叠菜单）统一用 `LightedgeBlurCard`；整张卡都铺图片背板的（音乐卡片、名片）用 `BackdropCard`；迷你播放条只要封面那一小块的同位置副本，直接在 `LightedgeBlurCard` 的 `backdrop` 里放一张和封面同位置、同尺寸的图。
 
 ```tsx
 <LightedgeBlurCard radiusClassName="rounded-full" className="p-4" wrapperClassName="sticky top-4">
@@ -89,21 +89,25 @@
 </LightedgeBlurCard>
 ```
 
-它渲染出来的结构是「外壳 + 假 border + 卡片」，假 border 与卡片**平级**、并且画在卡片**下面**：
+它渲染出来的结构是「外壳 + 背板 + 假 border + 玻璃层 + 内容层」；假 border 在最外面，玻璃层与内容层平级：
 
 ```
-<div class="relative">            只负责定位
-  <div class="lightedge …">       假 border（先画 → 在卡片下面，采样到的是卡片背后的页面）
-  <div class="blur-card …">…</div> 卡片本体
+<div class="relative">                 只负责定位
+  <div class="… backdrop">             背板（可选，玻璃下面）
+  <div class="lightedge …">            假 border（玻璃外面，采样页面）
+  <div class="blur-card absolute …">   玻璃层：背景 + backdrop-filter
+  <div class="relative z-10 …">…</div> 内容层：文字、头像/封面环…
 </div>
 ```
 
-**为什么不能把描边直接挂在 `blur-card` 上**：`backdrop-filter` 会创建「backdrop root」，它内部的一切（包括自己的伪元素）只能采样到「自己那层已经模糊过的合成结果」，边缘提亮就失效了 —— 和文档开头那条实测（126 vs 140）是同一个原因。搬到卡片外面之后，假 border 采样到的是页面，再压上 `--lightedge-line` 的色调，才是一条跟着背景走的模拟描边。画在下面而不是上面，是为了让它的采样范围里不含卡片本身。
+**为什么假 border 不能挂在玻璃层上**：`backdrop-filter` 会创建「backdrop root」，它内部的一切（包括自己的伪元素）只能采样到「自己那层已经模糊过的合成结果」，边缘提亮就失效了 —— 和文档开头那条实测（126 vs 140）是同一个原因。搬到玻璃外面之后，假 border 采样到的是页面，才是一条跟着背景走的模拟描边。
 
-环的粗细与位置继续用现成的 `lightedge-*` 工具类调，通过 `borderClassName` 传进来（例如 `lightedge-2`、`-lightedge-inset-1` 让整条环完全落在卡片外侧）。
+**为什么内容层也要和玻璃层拆开**：内容里的 `lightedge` 环（头像、封面高亮）同样要采样图片本身的边缘；如果把它们放进玻璃层里面，就会被玻璃层的 backdrop root 挡住，亮边直接消失（名片头像从白卡换成玻璃卡时就是这个症状）。拆成平级后，玻璃层只负责颜色和模糊，内容里的环照常采样图片。
 
-`LightedgeBlurCard` 还有一个可选的 **`backdrop` 插槽**：传给它的内容同样渲染在外壳里、位于假 border 与卡片**之前**（也就是卡片下面），会自动铺满整卡、裁到圆角、`pointer-events: none` + `aria-hidden`。卡片的 `backdrop-filter` 会把它糊成一层带色底 —— `music-card.tsx` 就是靠这个插槽塞了一张放大的封面副本，做出"封面模糊背板"；要是把副本直接塞进卡片内部，反而会被卡片的 backdrop root 挡住、采样不到。
+默认的假 border 就是 **1px**：假 border 层比卡片外扩 1px、环自身 `inset` 为 0，环正好贴在卡片外缘，和 banner 的 1px 亮边同宽。想调粗细/位置仍可通过 `borderClassName` 传 `lightedge-*` 工具类（例如 `lightedge-2`），但**不要**用 Tailwind 的 `-inset-0.5`——它在间距刻度里是 2px，环会被推到卡片外 2.5px，看起来就变粗（这正是之前的粗边问题）。
 
-`overflow: clip` 是防溢出的保险：万一里层内容有几像素溢出（文案变长、断点临界值等），就地裁掉，而不是漏到外面把整页撑出横向滚动条（实测往胶囊里塞 2000px 宽的元素，页面 `scrollWidth` 仍等于视口宽）。用 `clip` 而不是 `hidden`，是为了不把它变成可滚动容器；另外**不要**把它加到外层那个只负责 `sticky` 的容器上，否则绝对定位的折叠菜单会被一起裁掉。
+`LightedgeBlurCard` 还有一个可选的 **`backdrop` 插槽**：传给它的内容同样渲染在外壳里、位于假 border 与玻璃层**之前**（也就是玻璃下面），会自动铺满整卡、裁到圆角、`pointer-events: none` + `aria-hidden`。玻璃层的 `backdrop-filter` 会把它糊成一层带色底 —— `backdrop-card.tsx`（`BackdropCard`）就是靠这个插槽铺满整卡，做出“图片模糊背板”（音乐卡片、名片共用）；迷你播放条则只在这个插槽里放一张和封面同位置、同尺寸的小副本，让颜色只聚在封面周围。副本必须放在玻璃层下面（`backdrop` 插槽），放进内容层就会压到玻璃上面，不会被玻璃的 `backdrop-filter` 糊掉。
 
-> **注意 `backdrop-filter` 的 backdrop root 行为**：带 `backdrop-filter` 的元素会成为其子元素的「backdrop root」，导致子元素上的 `backdrop-blur` 只能采到该元素自身的内容，看起来就像模糊没生效。所以折叠菜单必须与胶囊本体**平级**（都放在那个只负责 `sticky` + `m-4` 的 `<nav>` 里），不能嵌在带模糊的胶囊内部。
+`overflow: clip` 是防溢出的保险：万一内容层有几像素溢出（文案变长、断点临界值等），就地裁掉，而不是漏到外面把整页撑出横向滚动条（实测往胶囊里塞 2000px 宽的元素，页面 `scrollWidth` 仍等于视口宽）。用 `clip` 而不是 `hidden`，是为了不把它变成可滚动容器；另外**不要**把它加到外层那个只负责 `sticky` 的容器上，否则绝对定位的折叠菜单会被一起裁掉。
+
+> **注意 `backdrop-filter` 的 backdrop root 行为**：带 `backdrop-filter` 的元素会成为其子元素的「backdrop root」，导致子元素上的 `backdrop-blur` 只能采到该元素自身的内容。所以 `LightedgeBlurCard` 把玻璃层和内容层拆成平级：玻璃层只做背景/模糊，内容里的 `lightedge` 环才采得到图片；折叠菜单也必须与胶囊本体**平级**（都放在那个只负责 `sticky` + `m-4` 的 `<nav>` 里），不能嵌在带模糊的胶囊内部。
